@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CafeRadar — 카페 근무자들이 근무 환경을 공유하고, 카페 알바를 찾는 사람들이 참고할 수 있는 커뮤니티">
+  <title>CafeRadar | 카페 근무 정보 커뮤니티</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- 헤더 -->
+  <header class="header" id="header">
+    <nav class="nav container">
+      <a href="#" class="logo" aria-label="CafeRadar 홈">
+        <svg class="logo-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3" />
+        </svg>
+        CafeRadar
+      </a>
+
+      <div class="nav-search">
+        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
+        <input type="search" id="search-input" class="search-input" placeholder="카페명으로 검색..."
+          autocomplete="off" aria-label="카페명 검색">
+      </div>
+
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#about">소개</a></li>
+        <li><a href="#reviews">후기</a></li>
+        <li>
+          <button type="button" class="btn btn-primary btn-sm" id="nav-write-btn">
+            후기 작성
+          </button>
+        </li>
+      </ul>
+
+      <button type="button" class="nav-toggle" id="nav-toggle" aria-label="메뉴 열기" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 히어로 -->
+    <section class="hero" id="hero">
+      <div class="hero-bg" aria-hidden="true"></div>
+      <div class="container hero-inner">
+        <div class="hero-content">
+          <span class="hero-badge">카페 근무자를 위한 커뮤니티</span>
+          <h1 class="hero-title">
+            일하기 전에,<br>
+            <span class="hero-highlight">근무 환경</span>부터 확인하세요
+          </h1>
+          <p class="hero-desc">
+            CafeRadar는 카페에서 일해본 사람들의 솔직한 후기를 모아<br class="hero-br">
+            더 나은 근무 선택을 돕는 서비스입니다.
+          </p>
+          <div class="hero-actions">
+            <button type="button" class="btn btn-primary btn-lg" id="hero-cta-btn">
+              카페 근무 정보를 공유해보세요
+            </button>
+            <a href="#reviews" class="btn btn-outline btn-lg">후기 둘러보기</a>
+          </div>
+          <dl class="hero-stats">
+            <div class="stat">
+              <dt class="stat-value" id="stat-count">0</dt>
+              <dd class="stat-label">등록된 후기</dd>
+            </div>
+            <div class="stat">
+              <dt class="stat-value" id="stat-regions">0</dt>
+              <dd class="stat-label">지역</dd>
+            </div>
+            <div class="stat">
+              <dt class="stat-value" id="stat-rating">—</dt>
+              <dd class="stat-label">평균 평점</dd>
+            </div>
+          </dl>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="hero-card-stack">
+            <article class="preview-card preview-card-1">
+              <div class="preview-card-header">
+                <span class="preview-cafe">블루보틀 성수</span>
+                <span class="preview-stars">★★★★★</span>
+              </div>
+              <p class="preview-summary">체계적인 교육과 깔끔한 매장, 다만 피크타임은 체력 소모가 큽니다.</p>
+            </article>
+            <article class="preview-card preview-card-2">
+              <div class="preview-card-header">
+                <span class="preview-cafe">스타벅스 강남역</span>
+                <span class="preview-stars">★★★★☆</span>
+              </div>
+              <p class="preview-summary">복리후생은 좋지만 주말 근무 비중이 높아요.</p>
+            </article>
+            <article class="preview-card preview-card-3">
+              <div class="preview-card-header">
+                <span class="preview-cafe">카페 온더루프</span>
+                <span class="preview-stars">★★★☆☆</span>
+              </div>
+              <p class="preview-summary">소규모 매장이라 다재다능하게 배울 수 있어요.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 서비스 소개 -->
+    <section class="section about" id="about">
+      <div class="container">
+        <header class="section-header">
+          <span class="section-label">About</span>
+          <h2 class="section-title">왜 CafeRadar인가요?</h2>
+          <p class="section-desc">
+            채용 공고만으로는 알 수 없는 분위기, 시급, 업무 강도를<br class="section-br">
+            실제 근무자의 경험으로 확인할 수 있습니다.
+          </p>
+        </header>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg>
+            </div>
+            <h3 class="feature-title">솔직한 후기</h3>
+            <p class="feature-text">장점과 단점을 함께 공유해, 현실적인 근무 환경을 파악할 수 있어요.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+            </div>
+            <h3 class="feature-title">지역별 정보</h3>
+            <p class="feature-text">내가 일하고 싶은 동네 카페의 근무 정보를 한눈에 비교해 보세요.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </div>
+            <h3 class="feature-title">익명 공유</h3>
+            <p class="feature-text">부담 없이 경험을 나누고, 다음 근무자에게 도움을 줄 수 있어요.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 최근 후기 -->
+    <section class="section recent" id="recent">
+      <div class="container">
+        <header class="section-header section-header-row">
+          <div>
+            <span class="section-label">Recent</span>
+            <h2 class="section-title">최근 등록된 후기</h2>
+          </div>
+          <a href="#reviews" class="link-more">전체 보기 →</a>
+        </header>
+        <div class="review-grid" id="recent-reviews" aria-live="polite">
+          <!-- JS 렌더링 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 후기 목록 -->
+    <section class="section reviews" id="reviews">
+      <div class="container">
+        <header class="section-header">
+          <span class="section-label">Reviews</span>
+          <h2 class="section-title">카페 근무 후기</h2>
+          <p class="section-desc" id="reviews-count-text">총 0개의 후기가 있습니다.</p>
+        </header>
+
+        <div class="mobile-search" id="mobile-search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input type="search" id="mobile-search-input" class="search-input" placeholder="카페명으로 검색..."
+            autocomplete="off" aria-label="카페명 검색">
+        </div>
+
+        <div class="reviews-toolbar">
+          <div class="filter-chips" id="filter-chips" role="group" aria-label="지역 필터">
+            <button type="button" class="chip chip-active" data-region="all">전체</button>
+          </div>
+          <button type="button" class="btn btn-primary" id="list-write-btn">
+            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            후기 작성
+          </button>
+        </div>
+
+        <div class="review-grid" id="review-list" aria-live="polite">
+          <!-- JS 렌더링 -->
+        </div>
+
+        <div class="empty-state hidden" id="empty-state">
+          <div class="empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3" />
+            </svg>
+          </div>
+          <h3 class="empty-title">아직 등록된 후기가 없어요</h3>
+          <p class="empty-text">첫 번째 후기를 작성하고 다른 근무자들에게 도움을 주세요.</p>
+          <button type="button" class="btn btn-primary" id="empty-write-btn">후기 작성하기</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 푸터 -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a href="#" class="logo logo-footer">
+          <svg class="logo-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3" />
+          </svg>
+          CafeRadar
+        </a>
+        <p class="footer-tagline">카페 근무, 미리 알고 시작하세요.</p>
+      </div>
+      <p class="footer-copy">&copy; 2026 CafeRadar. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- 후기 작성 모달 -->
+  <div class="modal-overlay hidden" id="write-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <header class="modal-header">
+        <h2 class="modal-title" id="modal-title">근무 후기 작성</h2>
+        <button type="button" class="modal-close" id="modal-close" aria-label="닫기">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </header>
+
+      <form class="modal-form" id="review-form" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cafe-name">카페명 <span class="required">*</span></label>
+            <input type="text" id="cafe-name" name="cafeName" placeholder="예: 블루보틀 성수" required>
+          </div>
+          <div class="form-group">
+            <label for="region">지역 <span class="required">*</span></label>
+            <input type="text" id="region" name="region" placeholder="예: 서울 성동구" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="work-period">근무기간 <span class="required">*</span></label>
+            <input type="text" id="work-period" name="workPeriod" placeholder="예: 2024.03 ~ 2024.08" required>
+          </div>
+          <div class="form-group">
+            <label for="position">직무 <span class="required">*</span></label>
+            <select id="position" name="position" required>
+              <option value="">선택해주세요</option>
+              <option value="바리스타">바리스타</option>
+              <option value="홀서빙">홀서빙</option>
+              <option value="매장관리">매장관리</option>
+              <option value="알바">알바</option>
+              <option value="파트타임">파트타임</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="hourly-wage">시급</label>
+            <input type="text" id="hourly-wage" name="hourlyWage" placeholder="예: 10,030원">
+          </div>
+          <div class="form-group">
+            <label for="atmosphere">근무 분위기</label>
+            <input type="text" id="atmosphere" name="atmosphere" placeholder="예: 바쁘지만 팀워크가 좋음">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="pros">장점</label>
+          <textarea id="pros" name="pros" rows="2" placeholder="이 카페에서 일할 때 좋았던 점"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="cons">단점</label>
+          <textarea id="cons" name="cons" rows="2" placeholder="아쉬웠던 점이나 주의할 점"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>별점 <span class="required">*</span></label>
+          <div class="star-rating" id="star-rating" role="radiogroup" aria-label="별점 선택">
+            <button type="button" class="star-btn" data-value="1" aria-label="1점">★</button>
+            <button type="button" class="star-btn" data-value="2" aria-label="2점">★</button>
+            <button type="button" class="star-btn" data-value="3" aria-label="3점">★</button>
+            <button type="button" class="star-btn" data-value="4" aria-label="4점">★</button>
+            <button type="button" class="star-btn" data-value="5" aria-label="5점">★</button>
+          </div>
+          <input type="hidden" id="rating" name="rating" value="0" required>
+          <p class="form-hint" id="rating-hint">별점을 선택해주세요</p>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" id="form-cancel">취소</button>
+          <button type="submit" class="btn btn-primary">후기 등록</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 후기 상세 모달 -->
+  <div class="modal-overlay hidden" id="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+    <div class="modal modal-detail">
+      <header class="modal-header">
+        <div>
+          <h2 class="modal-title" id="detail-title">카페명</h2>
+          <p class="modal-subtitle" id="detail-region"></p>
+        </div>
+        <button type="button" class="modal-close" id="detail-close" aria-label="닫기">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </header>
+      <div class="detail-body" id="detail-body">
+        <!-- JS 렌더링 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 토스트 알림 -->
+  <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
