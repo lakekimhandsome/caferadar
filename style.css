@@ -167,6 +167,29 @@ ul {
   border-color: var(--brown-300);
 }
 
+.btn-outline:hover {
+  background: var(--color-primary-light);
+  border-color: var(--brown-300);
+}
+
+/* 후기 작성 — 회원가입(primary)과 구분되는 소프트 스타일 */
+.btn-write {
+  background: var(--white);
+  color: var(--color-primary);
+  border: 1.5px solid var(--brown-300);
+  box-shadow: none;
+}
+
+.btn-write:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary-hover);
+}
+
+.btn-write .btn-icon {
+  stroke-width: 1.75;
+}
+
 .btn-sm {
   padding: 8px 16px;
   font-size: 0.875rem;
@@ -296,6 +319,25 @@ ul {
   color: var(--color-primary);
 }
 
+.nav-auth {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-nickname {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--brown-700);
+  padding: 6px 12px;
+  background: var(--color-primary-light);
+  border-radius: 100px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .nav-toggle {
   display: none;
   flex-direction: column;
@@ -334,26 +376,82 @@ ul {
 
 .hero {
   position: relative;
-  padding: calc(var(--header-height) + 64px) 0 80px;
+  min-height: calc(100vh - var(--header-height));
+  padding: calc(var(--header-height) + 48px) 0 96px;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  background: var(--brown-50);
 }
 
+/* 하단 — 다음 섹션으로 부드럽게 이어지는 페이드 */
 .hero-bg {
   position: absolute;
   inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 70%,
+    rgba(250, 247, 242, 0.5) 86%,
+    var(--brown-50) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 사진 — Hero 전체를 덮고, 그 위에 그radient로 자연스럽게 블렌드 */
+.hero-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.hero-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 68% center;
+  filter: saturate(0.88) sepia(0.1) brightness(1.02);
+  transform: scale(1.04);
+}
+
+.hero-photo-overlay {
+  position: absolute;
+  inset: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 70% 20%, rgba(196, 168, 130, 0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 10% 80%, rgba(111, 78, 55, 0.08) 0%, transparent 50%),
-    linear-gradient(180deg, var(--brown-50) 0%, var(--white) 100%);
+    linear-gradient(
+      102deg,
+      var(--brown-50) 0%,
+      rgba(250, 247, 242, 0.96) 14%,
+      rgba(250, 247, 242, 0.82) 26%,
+      rgba(250, 247, 242, 0.55) 38%,
+      rgba(250, 247, 242, 0.28) 50%,
+      rgba(250, 247, 242, 0.1) 62%,
+      rgba(250, 247, 242, 0.02) 72%,
+      transparent 82%
+    ),
+    linear-gradient(
+      to top,
+      rgba(42, 26, 15, 0.18) 0%,
+      transparent 38%
+    );
   pointer-events: none;
 }
 
 .hero-inner {
   position: relative;
+  z-index: 3;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 56px;
   align-items: center;
+  width: 100%;
+}
+
+.hero-content {
+  max-width: 540px;
 }
 
 .hero-badge {
@@ -413,51 +511,18 @@ ul {
   margin-top: 2px;
 }
 
-/* Hero preview cards */
-.hero-visual {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.hero-card-stack {
-  position: relative;
-  width: 100%;
-  max-width: 380px;
-  height: 320px;
-}
-
-.preview-card {
-  position: absolute;
-  width: 100%;
-  padding: 20px 24px;
-  background: var(--white);
+/* Hero 플로팅 카드 */
+.hero-float-card {
+  justify-self: end;
+  align-self: center;
+  max-width: 300px;
+  padding: 18px 20px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid rgba(111, 78, 55, 0.06);
-}
-
-.preview-card-1 {
-  top: 0;
-  left: 0;
-  transform: rotate(-2deg);
-  z-index: 3;
-}
-
-.preview-card-2 {
-  top: 80px;
-  left: 20px;
-  transform: rotate(1.5deg);
-  z-index: 2;
-  opacity: 0.95;
-}
-
-.preview-card-3 {
-  top: 160px;
-  left: 8px;
-  transform: rotate(-1deg);
-  z-index: 1;
-  opacity: 0.9;
+  box-shadow: 0 8px 32px rgba(61, 40, 23, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.55);
 }
 
 .preview-card-header {
@@ -795,6 +860,256 @@ ul {
   font-size: 0.9375rem;
   color: var(--color-text-muted);
   margin-bottom: 24px;
+}
+
+/* =============================================
+   Jobs — 구인/구직
+   ============================================= */
+
+.jobs-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.tab-btn {
+  padding: 10px 28px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  background: var(--white);
+  border: 1.5px solid var(--color-border);
+  border-radius: 100px;
+  transition: all var(--transition);
+}
+
+.tab-btn:hover {
+  border-color: var(--brown-300);
+  color: var(--color-primary);
+}
+
+.tab-btn.tab-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--white);
+}
+
+.jobs-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.jobs-panel-desc {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+}
+
+.job-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.job-card {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition);
+  border: 1px solid transparent;
+}
+
+.job-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--brown-100);
+}
+
+.job-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.job-card-title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--brown-800);
+  line-height: 1.35;
+}
+
+.job-badge {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 100px;
+}
+
+.job-badge-hiring {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.job-badge-seeking {
+  color: #7C5C2E;
+  background: var(--brown-100);
+}
+
+.job-badge-guest {
+  color: var(--gray-500);
+  background: var(--gray-100);
+}
+
+.job-summary {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+  margin-bottom: 14px;
+}
+
+.job-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 14px;
+  border-top: 1px solid var(--gray-100);
+  margin-top: auto;
+}
+
+.job-card-position {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+.job-card-date {
+  font-size: 0.75rem;
+  color: var(--gray-400);
+}
+
+/* Auth modal tabs */
+.modal-auth {
+  max-width: 420px;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  margin: 0 28px;
+  border-bottom: 1.5px solid var(--color-border);
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1.5px;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.auth-tab:hover {
+  color: var(--color-primary);
+}
+
+.auth-tab-active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.mypage-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--brown-50);
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+}
+
+.mypage-avatar {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--white);
+  background: var(--color-primary);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mypage-name {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--brown-800);
+}
+
+.mypage-email {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.mypage-section-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+
+.mypage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mypage-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+}
+
+.mypage-item-title {
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.mypage-empty {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  padding: 16px;
+  text-align: center;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
 }
 
 /* =============================================
@@ -1151,10 +1466,46 @@ ul {
    ============================================= */
 
 @media (max-width: 960px) {
+  .hero {
+    min-height: auto;
+    padding: calc(var(--header-height) + 40px) 0 64px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero-photo-img {
+    object-position: center 30%;
+    transform: scale(1.08);
+  }
+
+  .hero-photo-overlay {
+    background:
+      linear-gradient(
+        to bottom,
+        rgba(250, 247, 242, 0.15) 0%,
+        rgba(250, 247, 242, 0.72) 42%,
+        rgba(250, 247, 242, 0.92) 58%,
+        var(--brown-50) 72%
+      );
+  }
+
+  .hero-bg {
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 78%,
+      var(--brown-50) 100%
+    );
+  }
+
   .hero-inner {
     grid-template-columns: 1fr;
-    gap: 48px;
+    gap: 28px;
     text-align: center;
+  }
+
+  .hero-content {
+    max-width: none;
   }
 
   .hero-actions {
@@ -1165,13 +1516,9 @@ ul {
     justify-content: center;
   }
 
-  .hero-visual {
-    order: -1;
-  }
-
-  .hero-card-stack {
-    max-width: 320px;
-    height: 280px;
+  .hero-float-card {
+    justify-self: center;
+    max-width: 360px;
     margin: 0 auto;
   }
 
@@ -1251,6 +1598,23 @@ ul {
     padding: 12px 16px;
   }
 
+  .nav-auth {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+    padding: 12px 0 0;
+  }
+
+  .nav-auth .btn {
+    width: 100%;
+  }
+
+  .nav-nickname {
+    max-width: none;
+    width: 100%;
+    text-align: center;
+  }
+
   /* Mobile search bar in reviews section */
   .mobile-search {
     display: block;
@@ -1275,8 +1639,18 @@ ul {
     display: none;
   }
 
-  .review-grid {
+  .review-grid,
+  .job-grid {
     grid-template-columns: 1fr;
+  }
+
+  .jobs-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .jobs-toolbar .btn {
+    width: 100%;
   }
 
   .reviews-toolbar {
@@ -1321,6 +1695,10 @@ ul {
 
   .hero-actions .btn {
     width: 100%;
+  }
+
+  .hero-float-card {
+    max-width: calc(100% - 32px);
   }
 
   .modal {

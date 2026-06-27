@@ -32,17 +32,32 @@
           <circle cx="11" cy="11" r="8" />
           <path d="m21 21-4.35-4.35" />
         </svg>
-        <input type="search" id="search-input" class="search-input" placeholder="카페명으로 검색..."
-          autocomplete="off" aria-label="카페명 검색">
+        <input type="search" id="search-input" class="search-input" placeholder="카페명, 지역, 직무 검색..."
+          autocomplete="off" aria-label="통합 검색">
       </div>
 
       <ul class="nav-links" id="nav-links">
         <li><a href="#about">소개</a></li>
         <li><a href="#reviews">후기</a></li>
+        <li><a href="#jobs">구인/구직</a></li>
         <li>
-          <button type="button" class="btn btn-primary btn-sm" id="nav-write-btn">
+          <button type="button" class="btn btn-write btn-sm" id="nav-write-btn">
+            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
             후기 작성
           </button>
+        </li>
+        <!-- 비로그인 상태 -->
+        <li class="nav-auth nav-auth-guest" id="nav-auth-guest">
+          <button type="button" class="btn btn-outline btn-sm" id="nav-login-btn">로그인</button>
+          <button type="button" class="btn btn-primary btn-sm" id="nav-signup-btn">회원가입</button>
+        </li>
+        <!-- 로그인 상태 -->
+        <li class="nav-auth nav-auth-user hidden" id="nav-auth-user">
+          <span class="nav-nickname" id="nav-nickname"></span>
+          <button type="button" class="btn btn-outline btn-sm" id="nav-mypage-btn">마이페이지</button>
+          <button type="button" class="btn btn-outline btn-sm" id="nav-logout-btn">로그아웃</button>
         </li>
       </ul>
 
@@ -58,6 +73,16 @@
     <!-- 히어로 -->
     <section class="hero" id="hero">
       <div class="hero-bg" aria-hidden="true"></div>
+      <div class="hero-photo" aria-hidden="true">
+        <img
+          src="https://images.unsplash.com/photo-1511920170033-f8396924c348?w=1400&q=85&auto=format&fit=crop"
+          alt=""
+          class="hero-photo-img"
+          loading="eager"
+          width="1400"
+          height="900">
+        <div class="hero-photo-overlay"></div>
+      </div>
       <div class="container hero-inner">
         <div class="hero-content">
           <span class="hero-badge">카페 근무자를 위한 커뮤니티</span>
@@ -70,7 +95,7 @@
             더 나은 근무 선택을 돕는 서비스입니다.
           </p>
           <div class="hero-actions">
-            <button type="button" class="btn btn-primary btn-lg" id="hero-cta-btn">
+            <button type="button" class="btn btn-write btn-lg" id="hero-cta-btn">
               카페 근무 정보를 공유해보세요
             </button>
             <a href="#reviews" class="btn btn-outline btn-lg">후기 둘러보기</a>
@@ -90,31 +115,14 @@
             </div>
           </dl>
         </div>
-        <div class="hero-visual" aria-hidden="true">
-          <div class="hero-card-stack">
-            <article class="preview-card preview-card-1">
-              <div class="preview-card-header">
-                <span class="preview-cafe">블루보틀 성수</span>
-                <span class="preview-stars">★★★★★</span>
-              </div>
-              <p class="preview-summary">체계적인 교육과 깔끔한 매장, 다만 피크타임은 체력 소모가 큽니다.</p>
-            </article>
-            <article class="preview-card preview-card-2">
-              <div class="preview-card-header">
-                <span class="preview-cafe">스타벅스 강남역</span>
-                <span class="preview-stars">★★★★☆</span>
-              </div>
-              <p class="preview-summary">복리후생은 좋지만 주말 근무 비중이 높아요.</p>
-            </article>
-            <article class="preview-card preview-card-3">
-              <div class="preview-card-header">
-                <span class="preview-cafe">카페 온더루프</span>
-                <span class="preview-stars">★★★☆☆</span>
-              </div>
-              <p class="preview-summary">소규모 매장이라 다재다능하게 배울 수 있어요.</p>
-            </article>
+
+        <article class="hero-float-card" aria-hidden="true">
+          <div class="preview-card-header">
+            <span class="preview-cafe">블루보틀 성수</span>
+            <span class="preview-stars">★★★★★</span>
           </div>
-        </div>
+          <p class="preview-summary">체계적인 교육과 깔끔한 매장, 다만 피크타임은 체력 소모가 큽니다.</p>
+        </article>
       </div>
     </section>
 
@@ -152,11 +160,13 @@
           <article class="feature-card">
             <div class="feature-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
             </div>
-            <h3 class="feature-title">익명 공유</h3>
-            <p class="feature-text">부담 없이 경험을 나누고, 다음 근무자에게 도움을 줄 수 있어요.</p>
+            <h3 class="feature-title">구인 · 구직</h3>
+            <p class="feature-text">카페 매장과 구직자를 연결해, 더 빠르게 일자리를 찾을 수 있어요.</p>
           </article>
         </div>
       </div>
@@ -172,9 +182,7 @@
           </div>
           <a href="#reviews" class="link-more">전체 보기 →</a>
         </header>
-        <div class="review-grid" id="recent-reviews" aria-live="polite">
-          <!-- JS 렌더링 -->
-        </div>
+        <div class="review-grid" id="recent-reviews" aria-live="polite"></div>
       </div>
     </section>
 
@@ -192,25 +200,23 @@
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.35-4.35" />
           </svg>
-          <input type="search" id="mobile-search-input" class="search-input" placeholder="카페명으로 검색..."
-            autocomplete="off" aria-label="카페명 검색">
+          <input type="search" id="mobile-search-input" class="search-input" placeholder="카페명, 지역, 직무 검색..."
+            autocomplete="off" aria-label="통합 검색">
         </div>
 
         <div class="reviews-toolbar">
           <div class="filter-chips" id="filter-chips" role="group" aria-label="지역 필터">
             <button type="button" class="chip chip-active" data-region="all">전체</button>
           </div>
-          <button type="button" class="btn btn-primary" id="list-write-btn">
+          <button type="button" class="btn btn-write" id="list-write-btn">
             <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" />
+              <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
             </svg>
             후기 작성
           </button>
         </div>
 
-        <div class="review-grid" id="review-list" aria-live="polite">
-          <!-- JS 렌더링 -->
-        </div>
+        <div class="review-grid" id="review-list" aria-live="polite"></div>
 
         <div class="empty-state hidden" id="empty-state">
           <div class="empty-icon" aria-hidden="true">
@@ -221,7 +227,67 @@
           </div>
           <h3 class="empty-title">아직 등록된 후기가 없어요</h3>
           <p class="empty-text">첫 번째 후기를 작성하고 다른 근무자들에게 도움을 주세요.</p>
-          <button type="button" class="btn btn-primary" id="empty-write-btn">후기 작성하기</button>
+          <button type="button" class="btn btn-write" id="empty-write-btn">후기 작성하기</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 구인/구직 -->
+    <section class="section jobs" id="jobs">
+      <div class="container">
+        <header class="section-header">
+          <span class="section-label">Jobs</span>
+          <h2 class="section-title">구인 · 구직</h2>
+          <p class="section-desc" id="jobs-count-text">카페 매장과 구직자를 연결합니다.</p>
+        </header>
+
+        <div class="jobs-tabs" role="tablist" aria-label="구인 구직 탭">
+          <button type="button" class="tab-btn tab-active" role="tab" id="tab-hiring" aria-selected="true"
+            aria-controls="panel-hiring" data-tab="hiring">구인</button>
+          <button type="button" class="tab-btn" role="tab" id="tab-seeking" aria-selected="false"
+            aria-controls="panel-seeking" data-tab="seeking">구직</button>
+        </div>
+
+        <div class="jobs-toolbar">
+          <p class="jobs-panel-desc" id="jobs-panel-desc">카페에서 함께 일할 분을 모집하는 공고입니다.</p>
+          <button type="button" class="btn btn-primary" id="jobs-write-btn">
+            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            <span id="jobs-write-btn-text">구인글 작성</span>
+          </button>
+        </div>
+
+        <!-- 구인 패널 -->
+        <div class="tab-panel" id="panel-hiring" role="tabpanel" aria-labelledby="tab-hiring">
+          <div class="job-grid" id="hiring-list" aria-live="polite"></div>
+          <div class="empty-state hidden" id="hiring-empty">
+            <div class="empty-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <rect x="2" y="7" width="20" height="14" rx="2" />
+                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+              </svg>
+            </div>
+            <h3 class="empty-title">등록된 구인글이 없어요</h3>
+            <p class="empty-text">카페 매장이라면 첫 구인글을 작성해 보세요.</p>
+            <button type="button" class="btn btn-primary" id="hiring-empty-btn">구인글 작성하기</button>
+          </div>
+        </div>
+
+        <!-- 구직 패널 -->
+        <div class="tab-panel hidden" id="panel-seeking" role="tabpanel" aria-labelledby="tab-seeking">
+          <div class="job-grid" id="seeking-list" aria-live="polite"></div>
+          <div class="empty-state hidden" id="seeking-empty">
+            <div class="empty-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+              </svg>
+            </div>
+            <h3 class="empty-title">등록된 구직글이 없어요</h3>
+            <p class="empty-text">로그인 후 나를 소개하는 구직글을 작성해 보세요.</p>
+            <button type="button" class="btn btn-primary" id="seeking-empty-btn">구직글 작성하기</button>
+          </div>
         </div>
       </div>
     </section>
@@ -250,12 +316,9 @@
       <header class="modal-header">
         <h2 class="modal-title" id="modal-title">근무 후기 작성</h2>
         <button type="button" class="modal-close" id="modal-close" aria-label="닫기">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
       </header>
-
       <form class="modal-form" id="review-form" novalidate>
         <div class="form-row">
           <div class="form-group">
@@ -267,7 +330,6 @@
             <input type="text" id="region" name="region" placeholder="예: 서울 성동구" required>
           </div>
         </div>
-
         <div class="form-row">
           <div class="form-group">
             <label for="work-period">근무기간 <span class="required">*</span></label>
@@ -286,7 +348,6 @@
             </select>
           </div>
         </div>
-
         <div class="form-row">
           <div class="form-group">
             <label for="hourly-wage">시급</label>
@@ -297,17 +358,14 @@
             <input type="text" id="atmosphere" name="atmosphere" placeholder="예: 바쁘지만 팀워크가 좋음">
           </div>
         </div>
-
         <div class="form-group">
           <label for="pros">장점</label>
           <textarea id="pros" name="pros" rows="2" placeholder="이 카페에서 일할 때 좋았던 점"></textarea>
         </div>
-
         <div class="form-group">
           <label for="cons">단점</label>
           <textarea id="cons" name="cons" rows="2" placeholder="아쉬웠던 점이나 주의할 점"></textarea>
         </div>
-
         <div class="form-group">
           <label>별점 <span class="required">*</span></label>
           <div class="star-rating" id="star-rating" role="radiogroup" aria-label="별점 선택">
@@ -320,7 +378,6 @@
           <input type="hidden" id="rating" name="rating" value="0" required>
           <p class="form-hint" id="rating-hint">별점을 선택해주세요</p>
         </div>
-
         <div class="form-actions">
           <button type="button" class="btn btn-outline" id="form-cancel">취소</button>
           <button type="submit" class="btn btn-primary">후기 등록</button>
@@ -338,14 +395,208 @@
           <p class="modal-subtitle" id="detail-region"></p>
         </div>
         <button type="button" class="modal-close" id="detail-close" aria-label="닫기">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
       </header>
-      <div class="detail-body" id="detail-body">
-        <!-- JS 렌더링 -->
+      <div class="detail-body" id="detail-body"></div>
+    </div>
+  </div>
+
+  <!-- 로그인 / 회원가입 모달 -->
+  <div class="modal-overlay hidden" id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+    <div class="modal modal-auth">
+      <header class="modal-header">
+        <h2 class="modal-title" id="auth-modal-title">로그인</h2>
+        <button type="button" class="modal-close" id="auth-close" aria-label="닫기">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </header>
+      <div class="auth-tabs" role="tablist">
+        <button type="button" class="auth-tab auth-tab-active" data-auth-tab="login">로그인</button>
+        <button type="button" class="auth-tab" data-auth-tab="signup">회원가입</button>
       </div>
+
+      <!-- 로그인 폼 -->
+      <form class="modal-form hidden" id="login-form" novalidate>
+        <div class="form-group">
+          <label for="login-email">이메일 <span class="required">*</span></label>
+          <input type="email" id="login-email" name="email" placeholder="example@email.com" required>
+        </div>
+        <div class="form-group">
+          <label for="login-password">비밀번호 <span class="required">*</span></label>
+          <input type="password" id="login-password" name="password" placeholder="비밀번호 입력" required>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" id="login-cancel">취소</button>
+          <button type="submit" class="btn btn-primary">로그인</button>
+        </div>
+      </form>
+
+      <!-- 회원가입 폼 -->
+      <form class="modal-form" id="signup-form" novalidate>
+        <div class="form-group">
+          <label for="signup-nickname">닉네임 <span class="required">*</span></label>
+          <input type="text" id="signup-nickname" name="nickname" placeholder="사용할 닉네임" required>
+        </div>
+        <div class="form-group">
+          <label for="signup-email">이메일 <span class="required">*</span></label>
+          <input type="email" id="signup-email" name="email" placeholder="example@email.com" required>
+        </div>
+        <div class="form-group">
+          <label for="signup-password">비밀번호 <span class="required">*</span></label>
+          <input type="password" id="signup-password" name="password" placeholder="6자 이상" required minlength="6">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" id="signup-cancel">취소</button>
+          <button type="submit" class="btn btn-primary">회원가입</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 마이페이지 모달 -->
+  <div class="modal-overlay hidden" id="mypage-modal" role="dialog" aria-modal="true" aria-labelledby="mypage-title">
+    <div class="modal modal-detail">
+      <header class="modal-header">
+        <h2 class="modal-title" id="mypage-title">마이페이지</h2>
+        <button type="button" class="modal-close" id="mypage-close" aria-label="닫기">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </header>
+      <div class="detail-body" id="mypage-body"></div>
+    </div>
+  </div>
+
+  <!-- 구인글 작성 모달 -->
+  <div class="modal-overlay hidden" id="hiring-modal" role="dialog" aria-modal="true" aria-labelledby="hiring-modal-title">
+    <div class="modal">
+      <header class="modal-header">
+        <h2 class="modal-title" id="hiring-modal-title">구인글 작성</h2>
+        <button type="button" class="modal-close" id="hiring-close" aria-label="닫기">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </header>
+      <form class="modal-form" id="hiring-form" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="hiring-cafe">카페명 <span class="required">*</span></label>
+            <input type="text" id="hiring-cafe" name="cafeName" placeholder="예: 카페 온더루프" required>
+          </div>
+          <div class="form-group">
+            <label for="hiring-region">지역 <span class="required">*</span></label>
+            <input type="text" id="hiring-region" name="region" placeholder="예: 서울 마포구" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="hiring-position">모집 직무 <span class="required">*</span></label>
+            <select id="hiring-position" name="position" required>
+              <option value="">선택해주세요</option>
+              <option value="바리스타">바리스타</option>
+              <option value="홀서빙">홀서빙</option>
+              <option value="매장관리">매장관리</option>
+              <option value="알바">알바</option>
+              <option value="파트타임">파트타임</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="hiring-wage">시급 <span class="required">*</span></label>
+            <input type="text" id="hiring-wage" name="hourlyWage" placeholder="예: 10,500원" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="hiring-hours">근무 시간 <span class="required">*</span></label>
+          <input type="text" id="hiring-hours" name="workHours" placeholder="예: 주 3일, 14:00~20:00" required>
+        </div>
+        <div class="form-group">
+          <label for="hiring-contact">연락 방법 <span class="required">*</span></label>
+          <input type="text" id="hiring-contact" name="contact" placeholder="예: 카카오톡 ID 또는 전화번호" required>
+        </div>
+        <div class="form-group">
+          <label for="hiring-desc">상세 설명</label>
+          <textarea id="hiring-desc" name="description" rows="3" placeholder="업무 내용, 우대 사항 등"></textarea>
+        </div>
+        <p class="form-hint">비회원도 작성 가능합니다. 향후 점주 인증 기능이 추가될 예정입니다.</p>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" id="hiring-cancel">취소</button>
+          <button type="submit" class="btn btn-primary">구인글 등록</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 구직글 작성 모달 -->
+  <div class="modal-overlay hidden" id="seeking-modal" role="dialog" aria-modal="true" aria-labelledby="seeking-modal-title">
+    <div class="modal">
+      <header class="modal-header">
+        <h2 class="modal-title" id="seeking-modal-title">구직글 작성</h2>
+        <button type="button" class="modal-close" id="seeking-close" aria-label="닫기">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </header>
+      <form class="modal-form" id="seeking-form" novalidate>
+        <div class="form-group">
+          <label for="seeking-nickname">닉네임</label>
+          <input type="text" id="seeking-nickname" name="nickname" readonly>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="seeking-region">희망 지역 <span class="required">*</span></label>
+            <input type="text" id="seeking-region" name="region" placeholder="예: 서울 마포구" required>
+          </div>
+          <div class="form-group">
+            <label for="seeking-position">희망 직무 <span class="required">*</span></label>
+            <select id="seeking-position" name="position" required>
+              <option value="">선택해주세요</option>
+              <option value="바리스타">바리스타</option>
+              <option value="홀서빙">홀서빙</option>
+              <option value="매장관리">매장관리</option>
+              <option value="알바">알바</option>
+              <option value="파트타임">파트타임</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="seeking-experience">경력 <span class="required">*</span></label>
+            <input type="text" id="seeking-experience" name="experience" placeholder="예: 바리스타 1년" required>
+          </div>
+          <div class="form-group">
+            <label for="seeking-hours">가능 시간 <span class="required">*</span></label>
+            <input type="text" id="seeking-hours" name="availableHours" placeholder="예: 평일 오후, 주말" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="seeking-intro">자기소개 <span class="required">*</span></label>
+          <textarea id="seeking-intro" name="intro" rows="3" placeholder="경험, 강점, 성격 등을 소개해주세요" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="seeking-contact">연락 방법 <span class="required">*</span></label>
+          <input type="text" id="seeking-contact" name="contact" placeholder="예: 카카오톡 ID" required>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" id="seeking-cancel">취소</button>
+          <button type="submit" class="btn btn-primary">구직글 등록</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 구인/구직 상세 모달 -->
+  <div class="modal-overlay hidden" id="job-detail-modal" role="dialog" aria-modal="true" aria-labelledby="job-detail-title">
+    <div class="modal modal-detail">
+      <header class="modal-header">
+        <div>
+          <h2 class="modal-title" id="job-detail-title">제목</h2>
+          <p class="modal-subtitle" id="job-detail-subtitle"></p>
+        </div>
+        <button type="button" class="modal-close" id="job-detail-close" aria-label="닫기">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </header>
+      <div class="detail-body" id="job-detail-body"></div>
     </div>
   </div>
 
