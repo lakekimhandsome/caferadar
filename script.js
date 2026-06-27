@@ -175,7 +175,8 @@ const DOM = {
   navAuthUser: document.getElementById('nav-auth-user'),
   navNickname: document.getElementById('nav-nickname'),
   searchInput: document.getElementById('search-input'),
-  mobileSearchInput: document.getElementById('mobile-search-input'),
+  reviewsSearchInput: document.getElementById('reviews-search-input'),
+  jobsSearchInput: document.getElementById('jobs-search-input'),
   recentReviews: document.getElementById('recent-reviews'),
   reviewList: document.getElementById('review-list'),
   reviewsCountText: document.getElementById('reviews-count-text'),
@@ -474,7 +475,7 @@ function getFilteredReviews() {
 
   if (state.searchQuery.trim()) {
     result = result.filter((r) =>
-      matchesSearch(r, ['cafeName', 'region', 'position'], state.searchQuery)
+      matchesSearch(r, ['cafeName', 'region', 'position', 'pros', 'atmosphere'], state.searchQuery)
     );
   }
 
@@ -486,7 +487,7 @@ function getFilteredHiring() {
 
   if (state.searchQuery.trim()) {
     result = result.filter((h) =>
-      matchesSearch(h, ['cafeName', 'region', 'position'], state.searchQuery)
+      matchesSearch(h, ['cafeName', 'region', 'position', 'description', 'workHours'], state.searchQuery)
     );
   }
 
@@ -498,11 +499,25 @@ function getFilteredSeeking() {
 
   if (state.searchQuery.trim()) {
     result = result.filter((s) =>
-      matchesSearch(s, ['nickname', 'region', 'position'], state.searchQuery)
+      matchesSearch(s, ['nickname', 'region', 'position', 'experience', 'intro', 'availableHours'], state.searchQuery)
     );
   }
 
   return result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+/** 검색 시 결과가 있는 구인/구직 탭으로 자동 전환 */
+function autoSwitchJobTab() {
+  if (!state.searchQuery.trim()) return;
+
+  const hiringCount = getFilteredHiring().length;
+  const seekingCount = getFilteredSeeking().length;
+
+  if (hiringCount === 0 && seekingCount > 0) {
+    switchJobTab('seeking');
+  } else if (seekingCount === 0 && hiringCount > 0) {
+    switchJobTab('hiring');
+  }
 }
 
 /* =============================================
@@ -1268,30 +1283,58 @@ function bindEvents() {
     });
   });
 
-  // 통합 검색 (후기 + 구인/구직)
+  // 통합 검색 (후기 + 구인/구직) — 헤더·후기·구인/구직 검색창 동기화
   let searchTimer = null;
 
-  function handleSearchInput(value, sourceInput) {
-    state.searchQuery = value;
-    if (sourceInput !== DOM.searchInput) DOM.searchInput.value = value;
-    if (sourceInput !== DOM.mobileSearchInput) DOM.mobileSearchInput.value = value;
+  const searchInputs = [DOM.searchInput, DOM.reviewsSearchInput, DOM.jobsSearchInput];
 
-    renderReviewList();
-    renderJobsSection();
+  function syncSearchInputs(value, sourceInput) {
+    searchInputs.forEach((input) => {
+      if (input && input !== sourceInput) input.value = value;
+    });
+  }
 
-    if (value.trim() && sourceInput === DOM.searchInput) {
-      const hasReview = getFilteredReviews().length > 0;
-      const hasJob = getFilteredHiring().length + getFilteredSeeking().length > 0;
-      document.getElementById(hasReview ? 'reviews' : hasJob ? 'jobs' : 'reviews')
-        .scrollIntoView({ behavior: 'smooth' });
+  function scrollToSearchResults(sourceInput) {
+    const q = state.searchQuery.trim();
+    if (!q) return;
+
+    const reviewCount = getFilteredReviews().length;
+    const jobCount = getFilteredHiring().length + getFilteredSeeking().length;
+
+    if (sourceInput === DOM.jobsSearchInput) {
+      document.getElementById('jobs').scrollIntoView({ behavior: 'smooth' });
+    } else if (sourceInput === DOM.reviewsSearchInput) {
+      document.getElementById('reviews').scrollIntoView({ behavior: 'smooth' });
+    } else if (reviewCount > 0) {
+      document.getElementById('reviews').scrollIntoView({ behavior: 'smooth' });
+    } else if (jobCount > 0) {
+      document.getElementById('jobs').scrollIntoView({ behavior: 'smooth' });
+    } else {
+      document.getElementById('reviews').scrollIntoView({ behavior: 'smooth' });
     }
   }
 
-  [DOM.searchInput, DOM.mobileSearchInput].forEach((input) => {
+  function handleSearchInput(value, sourceInput, shouldScroll = false) {
+    state.searchQuery = value;
+    syncSearchInputs(value, sourceInput);
+
+    renderReviewList();
+    autoSwitchJobTab();
+    renderJobsSection();
+
+    if (shouldScroll && value.trim()) {
+      scrollToSearchResults(sourceInput);
+    }
+  }
+
+  searchInputs.forEach((input) => {
     if (!input) return;
     input.addEventListener('input', (e) => {
       clearTimeout(searchTimer);
-      searchTimer = setTimeout(() => handleSearchInput(e.target.value, e.target), 250);
+      searchTimer = setTimeout(
+        () => handleSearchInput(e.target.value, e.target, true),
+        250
+      );
     });
   });
 

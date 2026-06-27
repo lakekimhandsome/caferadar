@@ -412,8 +412,8 @@ ul {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 68% center;
-  filter: saturate(0.88) sepia(0.1) brightness(1.02);
+  object-position: 55% center;
+  filter: saturate(0.85) sepia(0.08) brightness(0.92);
   transform: scale(1.04);
 }
 
@@ -422,20 +422,19 @@ ul {
   inset: 0;
   background:
     linear-gradient(
-      102deg,
-      var(--brown-50) 0%,
-      rgba(250, 247, 242, 0.96) 14%,
-      rgba(250, 247, 242, 0.82) 26%,
-      rgba(250, 247, 242, 0.55) 38%,
-      rgba(250, 247, 242, 0.28) 50%,
-      rgba(250, 247, 242, 0.1) 62%,
-      rgba(250, 247, 242, 0.02) 72%,
-      transparent 82%
+      100deg,
+      rgba(250, 247, 242, 0.97) 0%,
+      rgba(250, 247, 242, 0.94) 18%,
+      rgba(250, 247, 242, 0.78) 32%,
+      rgba(250, 247, 242, 0.5) 46%,
+      rgba(250, 247, 242, 0.22) 58%,
+      rgba(42, 26, 15, 0.08) 70%,
+      rgba(42, 26, 15, 0.22) 100%
     ),
     linear-gradient(
       to top,
-      rgba(42, 26, 15, 0.18) 0%,
-      transparent 38%
+      rgba(42, 26, 15, 0.35) 0%,
+      transparent 45%
     );
   pointer-events: none;
 }
@@ -451,7 +450,16 @@ ul {
 }
 
 .hero-content {
-  max-width: 540px;
+  max-width: 520px;
+  padding: 36px 40px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(28px) saturate(1.15);
+  -webkit-backdrop-filter: blur(28px) saturate(1.15);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 8px 32px rgba(61, 40, 23, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .hero-badge {
@@ -460,7 +468,7 @@ ul {
   margin-bottom: 20px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--brown-700);
   background: var(--color-primary-light);
   border-radius: 100px;
   letter-spacing: -0.01em;
@@ -473,6 +481,7 @@ ul {
   letter-spacing: -0.03em;
   color: var(--brown-900);
   margin-bottom: 20px;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.6);
 }
 
 .hero-highlight {
@@ -481,7 +490,7 @@ ul {
 
 .hero-desc {
   font-size: 1.0625rem;
-  color: var(--color-text-muted);
+  color: var(--gray-700);
   line-height: 1.7;
   margin-bottom: 32px;
 }
@@ -490,12 +499,41 @@ ul {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 48px;
+  margin-bottom: 40px;
+}
+
+/* Hero 버튼 — 배경 사진 위에서도 선명하게 */
+.hero-actions .btn-write {
+  background: var(--color-primary);
+  color: var(--white);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.hero-actions .btn-write:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  color: var(--white);
+}
+
+.hero-actions .btn-outline {
+  background: var(--white);
+  border-color: var(--brown-300);
+  color: var(--brown-800);
+  box-shadow: var(--shadow-sm);
+}
+
+.hero-actions .btn-outline:hover {
+  background: var(--brown-50);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .hero-stats {
   display: flex;
   gap: 40px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(111, 78, 55, 0.1);
 }
 
 .stat-value {
@@ -507,7 +545,7 @@ ul {
 
 .stat-label {
   font-size: 0.8125rem;
-  color: var(--color-text-muted);
+  color: var(--gray-600);
   margin-top: 2px;
 }
 
@@ -516,13 +554,25 @@ ul {
   justify-self: end;
   align-self: center;
   max-width: 300px;
-  padding: 18px 20px;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  padding: 20px 22px;
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
   border-radius: var(--radius-lg);
-  box-shadow: 0 8px 32px rgba(61, 40, 23, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 8px 32px rgba(42, 26, 15, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.preview-cafe {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--brown-900);
+}
+
+.preview-summary {
+  font-size: 0.875rem;
+  color: var(--gray-700);
+  line-height: 1.55;
 }
 
 .preview-card-header {
@@ -532,22 +582,10 @@ ul {
   margin-bottom: 10px;
 }
 
-.preview-cafe {
-  font-weight: 600;
-  font-size: 0.9375rem;
-  color: var(--brown-800);
-}
-
 .preview-stars {
   font-size: 0.8125rem;
   color: var(--color-star);
   letter-spacing: 1px;
-}
-
-.preview-summary {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  line-height: 1.55;
 }
 
 /* =============================================
@@ -1449,9 +1487,16 @@ ul {
   }
 }
 
-/* Mobile search (hidden on desktop) */
-.mobile-search {
+/* Section search — 후기·구인/구직 동일 UI (모바일에서 헤더 검색 대체) */
+.section-search {
   display: none;
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.section-search .search-input {
+  width: 100%;
+  background: var(--white);
 }
 
 /* Search highlight */
@@ -1482,11 +1527,18 @@ ul {
     background:
       linear-gradient(
         to bottom,
-        rgba(250, 247, 242, 0.15) 0%,
-        rgba(250, 247, 242, 0.72) 42%,
-        rgba(250, 247, 242, 0.92) 58%,
-        var(--brown-50) 72%
+        rgba(42, 26, 15, 0.35) 0%,
+        rgba(250, 247, 242, 0.55) 28%,
+        rgba(250, 247, 242, 0.92) 50%,
+        var(--brown-50) 68%
       );
+  }
+
+  .hero-content {
+    padding: 28px 24px;
+    margin: 0 auto;
+    max-width: 520px;
+    background: rgba(255, 255, 255, 0.72);
   }
 
   .hero-bg {
@@ -1543,7 +1595,7 @@ ul {
     display: none;
   }
 
-  .mobile-search {
+  .section-search {
     display: block;
   }
 
@@ -1613,13 +1665,6 @@ ul {
     max-width: none;
     width: 100%;
     text-align: center;
-  }
-
-  /* Mobile search bar in reviews section */
-  .mobile-search {
-    display: block;
-    position: relative;
-    margin-bottom: 20px;
   }
 
   .hero {
