@@ -94,6 +94,49 @@ export async function signOut() {
   return { success: true, message: '로그아웃되었습니다.' };
 }
 
+/** 회원 탈퇴 — 비밀번호 확인 후 계정·후기·프로필 삭제 */
+export async function deleteAccount(password) {
+  if (!authState.user?.email) {
+    return { success: false, message: '로그인이 필요합니다.' };
+  }
+
+  const supabase = getSupabase();
+
+  const { error: verifyError } = await supabase.auth.signInWithPassword({
+    email: authState.user.email,
+    password,
+  });
+
+  if (verifyError) {
+    return { success: false, message: '비밀번호가 올바르지 않습니다.' };
+  }
+
+  const { error } = await supabase.rpc('delete_own_account');
+
+  if (error) {
+    console.error('[Auth] 탈퇴 실패:', error);
+    const msg = error.message || '';
+    const code = error.code || '';
+
+    if (msg.includes('NOT_AUTHENTICATED')) {
+      return { success: false, message: '로그인이 필요합니다.' };
+    }
+    if (code === 'PGRST202' || (code === '42883' && msg.includes('Could not find the function'))) {
+      return { success: false, message: '탈퇴 기능이 준비되지 않았습니다. migration_withdraw_reapply.sql을 실행한 뒤 1~2분 후 다시 시도해주세요.' };
+    }
+    if (msg.includes('permission denied') && msg.includes('users')) {
+      return { success: false, message: '탈퇴 권한 오류입니다. migration_withdraw_reapply.sql을 다시 실행해주세요.' };
+    }
+    return { success: false, message: msg || '탈퇴 처리에 실패했습니다.' };
+  }
+
+  authState.user = null;
+  authState.profile = null;
+  await supabase.auth.signOut();
+
+  return { success: true, message: '회원 탈퇴가 완료되었습니다.' };
+}
+
 export function requireAuth(onRequired) {
   if (isLoggedIn()) return true;
   onRequired?.();

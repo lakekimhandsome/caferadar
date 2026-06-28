@@ -2,7 +2,7 @@
  * CafeRadar — 앱 진입점
  * Supabase Auth + Database 연동
  */
-import { initAuth, signUp, signIn, signOut, requireAuth, isLoggedIn, authState } from './auth.js';
+import { initAuth, signUp, signIn, signOut, deleteAccount, requireAuth, isLoggedIn, authState } from './auth.js';
 import { fetchReviews, fetchReviewsByUser, createReview, deleteReview, updateReview } from './reviews.js';
 import {
   fetchJobs,
@@ -43,6 +43,7 @@ import {
   closeGuestPasswordModal,
   getGuestJobPassword,
   setGuestJobPassword,
+  openWithdrawModal,
 } from './ui.js';
 
 function getJobFormData(fd) {
@@ -262,6 +263,30 @@ async function handleGuestPasswordSubmit(e) {
   }
 }
 
+async function handleWithdrawSubmit(e) {
+  e.preventDefault();
+
+  const password = new FormData(DOM.withdrawForm).get('password');
+  if (!password) {
+    showToast('비밀번호를 입력해주세요.');
+    return;
+  }
+
+  const confirmed = window.confirm(
+    '정말 탈퇴하시겠습니까?\n\n프로필, 작성한 후기, 로그인 상태에서 작성한 구인글이 모두 삭제되며 복구할 수 없습니다.'
+  );
+  if (!confirmed) return;
+
+  const result = await deleteAccount(password);
+  showToast(result.message);
+
+  if (result.success) {
+    closeAllModals();
+    renderAuthNav();
+    await refreshAll();
+  }
+}
+
 async function openMyPage() {
   if (!isLoggedIn()) return;
 
@@ -443,6 +468,8 @@ function bindEvents() {
   document.getElementById('login-cancel')?.addEventListener('click', () => closeModal(DOM.authModal));
   document.getElementById('signup-cancel')?.addEventListener('click', () => closeModal(DOM.authModal));
   document.getElementById('mypage-close')?.addEventListener('click', () => closeModal(DOM.mypageModal));
+  document.getElementById('withdraw-close')?.addEventListener('click', () => closeModal(DOM.withdrawModal));
+  document.getElementById('withdraw-cancel')?.addEventListener('click', () => closeModal(DOM.withdrawModal));
   document.getElementById('hiring-close')?.addEventListener('click', () => {
     state.editingJobId = null;
     closeModal(DOM.hiringModal);
@@ -455,7 +482,7 @@ function bindEvents() {
   document.getElementById('job-password-close')?.addEventListener('click', closeGuestPasswordModal);
   document.getElementById('job-password-cancel')?.addEventListener('click', closeGuestPasswordModal);
 
-  [DOM.writeModal, DOM.detailModal, DOM.authModal, DOM.mypageModal, DOM.hiringModal, DOM.jobDetailModal, DOM.jobPasswordModal]
+  [DOM.writeModal, DOM.detailModal, DOM.authModal, DOM.mypageModal, DOM.hiringModal, DOM.jobDetailModal, DOM.jobPasswordModal, DOM.withdrawModal]
     .forEach((modal) => {
       modal?.addEventListener('click', (e) => {
         if (e.target === modal) {
@@ -476,6 +503,7 @@ function bindEvents() {
   DOM.loginForm.addEventListener('submit', handleLoginSubmit);
   DOM.hiringForm.addEventListener('submit', handleHiringSubmit);
   DOM.jobPasswordForm.addEventListener('submit', handleGuestPasswordSubmit);
+  DOM.withdrawForm.addEventListener('submit', handleWithdrawSubmit);
 
   DOM.starRating.querySelectorAll('.star-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -548,6 +576,7 @@ async function init() {
     onEditReview: handleEditReview,
     onEditJob: handleEditJob,
     onGuestJobManage: handleGuestJobManage,
+    onOpenWithdraw: openWithdrawModal,
   });
 
   bindEvents();

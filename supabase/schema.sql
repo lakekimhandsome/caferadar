@@ -349,3 +349,31 @@ grant execute on function public.create_guest_job(text, text, text, text, text, 
 grant execute on function public.update_guest_job(uuid, text, text, text, text, text, text, text, text, text) to anon, authenticated;
 grant execute on function public.update_guest_job_status(uuid, text, text) to anon, authenticated;
 grant execute on function public.delete_guest_job(uuid, text) to anon, authenticated;
+
+-- ─────────────────────────────────────────
+-- 6. 회원 탈퇴
+-- ─────────────────────────────────────────
+
+create or replace function public.delete_own_account()
+returns json
+language plpgsql
+security definer
+set search_path = auth, public
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then
+    raise exception 'NOT_AUTHENTICATED';
+  end if;
+
+  delete from public.jobs where user_id = v_uid;
+  delete from auth.users where id = v_uid;
+
+  return json_build_object('success', true);
+end;
+$$;
+
+revoke all on function public.delete_own_account() from public;
+revoke all on function public.delete_own_account() from anon;
+grant execute on function public.delete_own_account() to authenticated;

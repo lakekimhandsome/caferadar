@@ -1064,6 +1064,28 @@ ul {
   margin-top: 24px;
 }
 
+.mypage-danger {
+  margin-top: 32px;
+  padding: 20px;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+  background: #fef2f2;
+}
+
+.mypage-danger-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #b91c1c;
+  margin-bottom: 8px;
+}
+
+.mypage-danger-text {
+  font-size: 0.8125rem;
+  color: #991b1b;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
 .mypage-empty {
   font-size: 0.875rem;
   color: var(--color-text-muted);

@@ -21,7 +21,7 @@ let actionHandlers = {
   onEditReview: null,
   onEditJob: null,
   onGuestJobManage: null,
-  onVerifyGuestPassword: null,
+  onOpenWithdraw: null,
 };
 
 export function setActionHandlers(handlers) {
@@ -106,6 +106,8 @@ export const DOM = {
   detailRegion: document.getElementById('detail-region'),
   detailBody: document.getElementById('detail-body'),
   mypageBody: document.getElementById('mypage-body'),
+  withdrawModal: document.getElementById('withdraw-modal'),
+  withdrawForm: document.getElementById('withdraw-form'),
   jobDetailTitle: document.getElementById('job-detail-title'),
   jobDetailSubtitle: document.getElementById('job-detail-subtitle'),
   jobDetailBody: document.getElementById('job-detail-body'),
@@ -230,6 +232,13 @@ function bindDetailActions(container) {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       actionHandlers.onGuestJobManage?.(btn.dataset.id);
+    });
+  });
+
+  container.querySelectorAll('[data-action="open-withdraw"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionHandlers.onOpenWithdraw?.();
     });
   });
 
@@ -492,9 +501,20 @@ export async function renderMyPage(myReviews, myJobs = []) {
               ${renderDeleteButton('job', j.id)}
             </div>
           </div>`).join('')}
+    </div>
+    <div class="mypage-danger">
+      <h3 class="mypage-danger-title">회원 탈퇴</h3>
+      <p class="mypage-danger-text">탈퇴 시 프로필과 작성한 후기가 삭제되며, 로그인으로 작성한 구인글도 함께 삭제됩니다. 이 작업은 되돌릴 수 없습니다.</p>
+      <button type="button" class="btn btn-danger btn-sm" data-action="open-withdraw">회원 탈퇴</button>
     </div>`;
 
   bindDetailActions(DOM.mypageBody);
+}
+
+export function openWithdrawModal() {
+  DOM.withdrawForm.reset();
+  openModal(DOM.withdrawModal);
+  DOM.withdrawForm.querySelector('#withdraw-password')?.focus();
 }
 
 export function openModal(modal) {
@@ -510,7 +530,7 @@ export function closeModal(modal) {
 }
 
 export function closeAllModals() {
-  [DOM.writeModal, DOM.detailModal, DOM.authModal, DOM.mypageModal, DOM.hiringModal, DOM.jobDetailModal, DOM.jobPasswordModal]
+  [DOM.writeModal, DOM.detailModal, DOM.authModal, DOM.mypageModal, DOM.hiringModal, DOM.jobDetailModal, DOM.jobPasswordModal, DOM.withdrawModal]
     .forEach(closeModal);
   document.body.style.overflow = '';
 }
