@@ -86,12 +86,16 @@
         <div class="hero-content">
           <span class="hero-badge">카페 근무자를 위한 커뮤니티</span>
           <h1 class="hero-title">
-            일하기 전에,<br>
-            <span class="hero-highlight">근무 환경</span>부터 확인하세요
+            카페는 <span class="hero-highlight">워라밸</span>이 어떨까<br>
+            궁금합니다.
           </h1>
-          <p class="hero-desc">
-            CafeRadar는 카페에서 일해본 사람들의 솔직한 후기를 모아<br class="hero-br">
-            더 나은 근무 선택을 돕는 서비스입니다.
+          <p class="hero-desc hero-desc-emotional">
+            나만 궁금한 걸까요?<br>
+            우리 모두 궁금하잖아요.<br><br>
+            아르바이트도.<br>
+            직원이라도.<br>
+            내가 오래 일할 곳인데.<br><br>
+            이제는 서로의 경험을 함께 공유해보세요.
           </p>
           <div class="hero-actions">
             <button type="button" class="btn btn-primary btn-lg" id="hero-cta-btn">
@@ -355,7 +359,7 @@
         </div>
         <div class="form-actions">
           <button type="button" class="btn btn-outline" id="form-cancel">취소</button>
-          <button type="submit" class="btn btn-primary">후기 등록</button>
+          <button type="submit" class="btn btn-primary" id="review-submit-btn">후기 등록</button>
         </div>
       </form>
     </div>
@@ -492,10 +496,15 @@
           <label for="hiring-desc">상세 설명</label>
           <textarea id="hiring-desc" name="description" rows="3" placeholder="업무 내용, 우대 사항 등"></textarea>
         </div>
-        <p class="form-hint">비회원도 작성 가능합니다. 향후 점주 인증 기능이 추가될 예정입니다.</p>
+        <div class="form-group" id="hiring-password-group">
+          <label for="hiring-password">비밀번호 <span class="required">*</span></label>
+          <input type="password" id="hiring-password" name="guestPassword" placeholder="4자 이상 · 수정·삭제 시 사용" minlength="4" autocomplete="new-password">
+          <p class="form-hint">비회원 작성 시 필수입니다. 분실 시 수정·삭제가 불가능합니다.</p>
+        </div>
+        <p class="form-hint hiring-form-hint">비회원 작성 시 비밀번호가 필요합니다. 로그인 후 작성하면 계정과 연결됩니다.</p>
         <div class="form-actions">
           <button type="button" class="btn btn-outline" id="hiring-cancel">취소</button>
-          <button type="submit" class="btn btn-primary">구인글 등록</button>
+          <button type="submit" class="btn btn-primary" id="hiring-submit-btn">구인글 등록</button>
         </div>
       </form>
     </div>
@@ -514,6 +523,29 @@
         </button>
       </header>
       <div class="detail-body" id="job-detail-body"></div>
+    </div>
+  </div>
+
+  <!-- 비회원 구인글 비밀번호 확인 -->
+  <div class="modal-overlay hidden" id="job-password-modal" role="dialog" aria-modal="true" aria-labelledby="job-password-title">
+    <div class="modal modal-auth">
+      <header class="modal-header">
+        <h2 class="modal-title" id="job-password-title">글 관리 인증</h2>
+        <button type="button" class="modal-close" id="job-password-close" aria-label="닫기">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </header>
+      <form class="modal-form" id="job-password-form" novalidate>
+        <p class="form-hint">작성 시 설정한 비밀번호를 입력해주세요.</p>
+        <div class="form-group">
+          <label for="job-manage-password">비밀번호 <span class="required">*</span></label>
+          <input type="password" id="job-manage-password" name="password" placeholder="비밀번호 입력" required autocomplete="current-password">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" id="job-password-cancel">취소</button>
+          <button type="submit" class="btn btn-primary">확인</button>
+        </div>
+      </form>
     </div>
   </div>
 

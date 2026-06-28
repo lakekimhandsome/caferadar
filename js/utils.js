@@ -73,6 +73,7 @@ export function mapReviewFromDb(row) {
 export function mapJobFromDb(row) {
   return {
     id: row.id,
+    userId: row.user_id || null,
     cafeName: row.cafe_name,
     region: row.region,
     position: row.position,
@@ -80,6 +81,22 @@ export function mapJobFromDb(row) {
     workHours: row.work_time,
     contact: row.contact,
     description: row.description || '',
+    status: row.status || 'open',
     createdAt: row.created_at,
   };
+}
+
+/** 구인글 모집 상태 라벨 */
+export function getJobStatusLabel(status) {
+  return status === 'closed' ? '모집완료' : '모집중';
+}
+
+/** 구인글 모집 상태 CSS 클래스 */
+export function getJobStatusBadgeClass(status) {
+  return status === 'closed' ? 'job-badge-closed' : 'job-badge-open';
+}
+
+/** 삭제 확인 대화상자 */
+export function confirmDelete(message = '정말 삭제하시겠습니까?') {
+  return window.confirm(message);
 }

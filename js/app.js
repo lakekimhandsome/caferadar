@@ -3,8 +3,19 @@
  * Supabase Auth + Database 연동
  */
 import { initAuth, signUp, signIn, signOut, requireAuth, isLoggedIn, authState } from './auth.js';
-import { fetchReviews, fetchReviewsByUser, createReview } from './reviews.js';
-import { fetchJobs, createJob } from './jobs.js';
+import { fetchReviews, fetchReviewsByUser, createReview, deleteReview, updateReview } from './reviews.js';
+import {
+  fetchJobs,
+  fetchJobsByUser,
+  createJob,
+  updateJob,
+  deleteJob,
+  deleteGuestJob,
+  updateJobStatus,
+  updateGuestJobStatus,
+  verifyGuestJobPassword,
+} from './jobs.js';
+import { confirmDelete } from './utils.js';
 import {
   state,
   DOM,
@@ -16,6 +27,9 @@ import {
   closeModal,
   closeAllModals,
   openWriteModal,
+  openWriteModalForEdit,
+  openHiringModalCreate,
+  openHiringModalForEdit,
   openAuthModal,
   switchAuthTab,
   resetReviewForm,
@@ -23,10 +37,39 @@ import {
   syncReviewSearchInputs,
   syncJobSearchInputs,
   closeMobileNav,
-  renderJobList,
+  setActionHandlers,
+  openJobDetail,
+  openGuestPasswordModal,
+  closeGuestPasswordModal,
+  getGuestJobPassword,
+  setGuestJobPassword,
 } from './ui.js';
 
-/* ── 데이터 로드 ── */
+function getJobFormData(fd) {
+  return {
+    cafeName: fd.get('cafeName'),
+    region: fd.get('region'),
+    position: fd.get('position'),
+    hourlyWage: fd.get('hourlyWage'),
+    workHours: fd.get('workHours'),
+    contact: fd.get('contact'),
+    description: fd.get('description'),
+  };
+}
+
+function getReviewFormData(fd) {
+  return {
+    cafeName: fd.get('cafeName'),
+    region: fd.get('region'),
+    workPeriod: fd.get('workPeriod'),
+    position: fd.get('position'),
+    hourlyWage: fd.get('hourlyWage'),
+    atmosphere: fd.get('atmosphere'),
+    pros: fd.get('pros'),
+    cons: fd.get('cons'),
+    rating: Number(fd.get('rating')),
+  };
+}
 
 async function loadReviews() {
   state.reviews = await fetchReviews({
@@ -51,8 +94,6 @@ async function refreshAll() {
   }
 }
 
-/* ── 폼 핸들러 ── */
-
 function validateRequired(form, names) {
   let valid = true;
   names.forEach((name) => {
@@ -74,9 +115,9 @@ async function handleReviewSubmit(e) {
 
   const fd = new FormData(DOM.reviewForm);
   const valid = validateRequired(DOM.reviewForm, ['cafeName', 'region', 'workPeriod', 'position']);
-  const rating = Number(fd.get('rating'));
+  const formData = getReviewFormData(fd);
 
-  if (!rating || rating < 1) {
+  if (!formData.rating || formData.rating < 1) {
     DOM.ratingHint.textContent = '별점을 선택해주세요';
     DOM.ratingHint.classList.add('error');
     showToast('별점을 선택해주세요.');
@@ -85,20 +126,16 @@ async function handleReviewSubmit(e) {
   if (!valid) { showToast('필수 항목을 모두 입력해주세요.'); return; }
 
   try {
-    await createReview(authState.user.id, {
-      cafeName: fd.get('cafeName'),
-      region: fd.get('region'),
-      workPeriod: fd.get('workPeriod'),
-      position: fd.get('position'),
-      hourlyWage: fd.get('hourlyWage'),
-      atmosphere: fd.get('atmosphere'),
-      pros: fd.get('pros'),
-      cons: fd.get('cons'),
-      rating,
-    });
+    if (state.editingReviewId) {
+      await updateReview(state.editingReviewId, formData);
+      showToast('후기가 수정되었습니다!');
+    } else {
+      await createReview(authState.user.id, formData);
+      showToast('후기가 등록되었습니다!');
+    }
 
     closeModal(DOM.writeModal);
-    showToast('후기가 등록되었습니다!');
+    state.editingReviewId = null;
     await refreshAll();
     document.getElementById('reviews').scrollIntoView({ behavior: 'smooth' });
   } catch (err) {
@@ -148,26 +185,78 @@ async function handleLoginSubmit(e) {
 async function handleHiringSubmit(e) {
   e.preventDefault();
   const fd = new FormData(DOM.hiringForm);
-  const valid = validateRequired(DOM.hiringForm, [
-    'cafeName', 'region', 'position', 'hourlyWage', 'workHours', 'contact',
-  ]);
+  const required = ['cafeName', 'region', 'position', 'hourlyWage', 'workHours', 'contact'];
+  const valid = validateRequired(DOM.hiringForm, required);
   if (!valid) { showToast('필수 항목을 모두 입력해주세요.'); return; }
 
+  const formData = getJobFormData(fd);
+  const loggedIn = isLoggedIn();
+  const guestPassword = fd.get('guestPassword')?.trim();
+
+  if (!loggedIn && !state.editingJobId) {
+    if (!guestPassword || guestPassword.length < 4) {
+      showToast('비밀번호는 4자 이상 입력해주세요.');
+      return;
+    }
+  }
+
   try {
-    await createJob({
-      cafeName: fd.get('cafeName'),
-      region: fd.get('region'),
-      position: fd.get('position'),
-      hourlyWage: fd.get('hourlyWage'),
-      workHours: fd.get('workHours'),
-      contact: fd.get('contact'),
-      description: fd.get('description'),
-    });
+    if (state.editingJobId) {
+      const job = state.jobs.find((j) => j.id === state.editingJobId);
+      if (!job) throw new Error('구인글을 찾을 수 없습니다.');
+
+      if (job.userId) {
+        await updateJob(state.editingJobId, formData, state.editingJobStatus);
+      } else {
+        const password = getGuestJobPassword(state.editingJobId);
+        if (!password) {
+          showToast('비밀번호 확인이 필요합니다.');
+          openGuestPasswordModal(state.editingJobId);
+          return;
+        }
+        await updateGuestJob(state.editingJobId, password, formData, state.editingJobStatus);
+      }
+      showToast('구인글이 수정되었습니다!');
+    } else {
+      await createJob(
+        formData,
+        loggedIn ? authState.user.id : null,
+        guestPassword,
+      );
+      showToast('구인글이 등록되었습니다!');
+    }
 
     closeModal(DOM.hiringModal);
-    showToast('구인글이 등록되었습니다!');
+    state.editingJobId = null;
     await refreshAll();
     document.getElementById('jobs').scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    showToast(err.message);
+  }
+}
+
+async function handleGuestPasswordSubmit(e) {
+  e.preventDefault();
+  const jobId = state.pendingGuestJobId;
+  if (!jobId) return;
+
+  const password = new FormData(DOM.jobPasswordForm).get('password')?.trim();
+  if (!password) {
+    showToast('비밀번호를 입력해주세요.');
+    return;
+  }
+
+  try {
+    const valid = await verifyGuestJobPassword(jobId, password);
+    if (!valid) {
+      showToast('비밀번호가 올바르지 않습니다.');
+      return;
+    }
+
+    setGuestJobPassword(jobId, password);
+    closeGuestPasswordModal();
+    showToast('인증되었습니다. 글을 관리할 수 있습니다.');
+    openJobDetail(jobId);
   } catch (err) {
     showToast(err.message);
   }
@@ -177,18 +266,112 @@ async function openMyPage() {
   if (!isLoggedIn()) return;
 
   try {
-    const myReviews = await fetchReviewsByUser(authState.user.id);
-    await renderMyPage(myReviews);
+    const [myReviews, myJobs] = await Promise.all([
+      fetchReviewsByUser(authState.user.id),
+      fetchJobsByUser(authState.user.id),
+    ]);
+    await renderMyPage(myReviews, myJobs);
     openModal(DOM.mypageModal);
   } catch (err) {
     showToast(err.message);
   }
 }
 
-function openHiringModal() {
-  DOM.hiringForm.reset();
-  openModal(DOM.hiringModal);
-  DOM.hiringForm.querySelector('#hiring-cafe')?.focus();
+function handleEditReview(id) {
+  const review = state.reviews.find((r) => r.id === id);
+  if (!review || review.userId !== authState.user?.id) return;
+  closeModal(DOM.detailModal);
+  closeModal(DOM.mypageModal);
+  openWriteModalForEdit(review);
+}
+
+function handleEditJob(id) {
+  const job = state.jobs.find((j) => j.id === id);
+  if (!job) return;
+
+  if (job.userId && job.userId !== authState.user?.id) return;
+
+  if (!job.userId && !getGuestJobPassword(id)) {
+    openGuestPasswordModal(id);
+    return;
+  }
+
+  closeModal(DOM.jobDetailModal);
+  closeModal(DOM.mypageModal);
+  openHiringModalForEdit(job);
+}
+
+function handleGuestJobManage(id) {
+  openGuestPasswordModal(id);
+}
+
+async function handleDeleteReview(id) {
+  if (!confirmDelete('정말 삭제하시겠습니까?')) return;
+
+  try {
+    await deleteReview(id);
+    closeModal(DOM.detailModal);
+    closeModal(DOM.mypageModal);
+    showToast('후기가 삭제되었습니다.');
+    await refreshAll();
+  } catch (err) {
+    showToast(err.message);
+  }
+}
+
+async function handleDeleteJob(id) {
+  const job = state.jobs.find((j) => j.id === id);
+  if (!job) return;
+
+  if (!confirmDelete('정말 삭제하시겠습니까?')) return;
+
+  try {
+    if (job.userId) {
+      await deleteJob(id);
+    } else {
+      const password = getGuestJobPassword(id);
+      if (!password) {
+        openGuestPasswordModal(id);
+        showToast('삭제하려면 비밀번호 확인이 필요합니다.');
+        return;
+      }
+      await deleteGuestJob(id, password);
+      delete state.guestJobPasswords[id];
+    }
+
+    closeModal(DOM.jobDetailModal);
+    closeModal(DOM.mypageModal);
+    showToast('구인글이 삭제되었습니다.');
+    await refreshAll();
+  } catch (err) {
+    showToast(err.message);
+  }
+}
+
+async function handleUpdateJobStatus(id, status) {
+  const job = state.jobs.find((j) => j.id === id);
+  if (!job || job.status === status) return;
+
+  try {
+    if (job.userId) {
+      await updateJobStatus(id, status);
+    } else {
+      const password = getGuestJobPassword(id);
+      if (!password) {
+        openGuestPasswordModal(id);
+        showToast('상태 변경하려면 비밀번호 확인이 필요합니다.');
+        return;
+      }
+      await updateGuestJobStatus(id, password, status);
+    }
+
+    state.editingJobStatus = status;
+    showToast(status === 'closed' ? '모집완료로 변경되었습니다.' : '모집중으로 변경되었습니다.');
+    await refreshAll();
+    openJobDetail(id);
+  } catch (err) {
+    showToast(err.message);
+  }
 }
 
 function tryOpenWriteModal() {
@@ -198,8 +381,6 @@ function tryOpenWriteModal() {
   })) return;
   openWriteModal();
 }
-
-/* ── 이벤트 바인딩 ── */
 
 function bindEvents() {
   window.addEventListener('scroll', () => {
@@ -246,24 +427,43 @@ function bindEvents() {
     tab.addEventListener('click', () => switchAuthTab(tab.dataset.authTab));
   });
 
-  document.getElementById('jobs-write-btn')?.addEventListener('click', openHiringModal);
-  document.getElementById('job-empty-btn')?.addEventListener('click', openHiringModal);
+  document.getElementById('jobs-write-btn')?.addEventListener('click', openHiringModalCreate);
+  document.getElementById('job-empty-btn')?.addEventListener('click', openHiringModalCreate);
 
-  document.getElementById('modal-close')?.addEventListener('click', () => closeModal(DOM.writeModal));
-  document.getElementById('form-cancel')?.addEventListener('click', () => closeModal(DOM.writeModal));
+  document.getElementById('modal-close')?.addEventListener('click', () => {
+    state.editingReviewId = null;
+    closeModal(DOM.writeModal);
+  });
+  document.getElementById('form-cancel')?.addEventListener('click', () => {
+    state.editingReviewId = null;
+    closeModal(DOM.writeModal);
+  });
   document.getElementById('detail-close')?.addEventListener('click', () => closeModal(DOM.detailModal));
   document.getElementById('auth-close')?.addEventListener('click', () => closeModal(DOM.authModal));
   document.getElementById('login-cancel')?.addEventListener('click', () => closeModal(DOM.authModal));
   document.getElementById('signup-cancel')?.addEventListener('click', () => closeModal(DOM.authModal));
   document.getElementById('mypage-close')?.addEventListener('click', () => closeModal(DOM.mypageModal));
-  document.getElementById('hiring-close')?.addEventListener('click', () => closeModal(DOM.hiringModal));
-  document.getElementById('hiring-cancel')?.addEventListener('click', () => closeModal(DOM.hiringModal));
+  document.getElementById('hiring-close')?.addEventListener('click', () => {
+    state.editingJobId = null;
+    closeModal(DOM.hiringModal);
+  });
+  document.getElementById('hiring-cancel')?.addEventListener('click', () => {
+    state.editingJobId = null;
+    closeModal(DOM.hiringModal);
+  });
   document.getElementById('job-detail-close')?.addEventListener('click', () => closeModal(DOM.jobDetailModal));
+  document.getElementById('job-password-close')?.addEventListener('click', closeGuestPasswordModal);
+  document.getElementById('job-password-cancel')?.addEventListener('click', closeGuestPasswordModal);
 
-  [DOM.writeModal, DOM.detailModal, DOM.authModal, DOM.mypageModal, DOM.hiringModal, DOM.jobDetailModal]
+  [DOM.writeModal, DOM.detailModal, DOM.authModal, DOM.mypageModal, DOM.hiringModal, DOM.jobDetailModal, DOM.jobPasswordModal]
     .forEach((modal) => {
       modal?.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal(modal);
+        if (e.target === modal) {
+          if (modal === DOM.hiringModal) state.editingJobId = null;
+          if (modal === DOM.writeModal) state.editingReviewId = null;
+          if (modal === DOM.jobPasswordModal) closeGuestPasswordModal();
+          else closeModal(modal);
+        }
       });
     });
 
@@ -275,6 +475,7 @@ function bindEvents() {
   DOM.signupForm.addEventListener('submit', handleSignupSubmit);
   DOM.loginForm.addEventListener('submit', handleLoginSubmit);
   DOM.hiringForm.addEventListener('submit', handleHiringSubmit);
+  DOM.jobPasswordForm.addEventListener('submit', handleGuestPasswordSubmit);
 
   DOM.starRating.querySelectorAll('.star-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -316,11 +517,7 @@ function bindEvents() {
     jobSearchTimer = setTimeout(async () => {
       try {
         await loadJobs();
-        renderJobList();
-        updateStats();
-        renderRecentReviews();
-        renderRegionFilters();
-        renderReviewList();
+        renderAll();
         if (e.target.value.trim()) {
           document.getElementById('jobs').scrollIntoView({ behavior: 'smooth' });
         }
@@ -343,9 +540,16 @@ function bindEvents() {
   });
 }
 
-/* ── 초기화 ── */
-
 async function init() {
+  setActionHandlers({
+    onDeleteReview: handleDeleteReview,
+    onDeleteJob: handleDeleteJob,
+    onUpdateJobStatus: handleUpdateJobStatus,
+    onEditReview: handleEditReview,
+    onEditJob: handleEditJob,
+    onGuestJobManage: handleGuestJobManage,
+  });
+
   bindEvents();
 
   await initAuth(async (event) => {

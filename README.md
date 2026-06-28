@@ -96,13 +96,15 @@ Supabase Dashboard → **SQL Editor** → New query
 |--------|------|
 | `profiles` | id, nickname, created_at |
 | `reviews` | id, user_id, cafe_name, region, position, wage, period, atmosphere, pros, cons, rating, created_at |
-| `jobs` | id, cafe_name, region, position, wage, work_time, contact, description, created_at |
+| `jobs` | id, user_id, cafe_name, region, position, wage, work_time, contact, description, status, created_at |
 
 RLS(Row Level Security) 정책:
 
 - **profiles** — 전체 조회, 본인만 수정
-- **reviews** — 전체 조회, 로그인 회원만 작성 (본인 user_id)
-- **jobs** — 전체 조회, 비회원 포함 누구나 작성
+- **reviews** — 전체 조회, 로그인 회원만 작성/삭제 (본인 user_id)
+- **jobs** — 전체 조회, 비회원 포함 작성 / 로그인 작성자만 수정·삭제 (user_id)
+
+> 이미 DB를 생성한 경우 [`supabase/migration_v2.sql`](supabase/migration_v2.sql), [`supabase/migration_v3.sql`](supabase/migration_v3.sql) 을 순서대로 SQL Editor에서 실행하세요.
 
 회원가입 시 `profiles` 행은 DB 트리거(`handle_new_user`)로 자동 생성됩니다.
 

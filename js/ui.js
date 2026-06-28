@@ -8,8 +8,49 @@ import {
   renderStars,
   formatDate,
   getReviewSummary,
+  getJobStatusLabel,
+  getJobStatusBadgeClass,
 } from './utils.js';
 import { isLoggedIn, getNickname, authState } from './auth.js';
+
+/** 상세 모달 액션 핸들러 (app.js에서 등록) */
+let actionHandlers = {
+  onDeleteReview: null,
+  onDeleteJob: null,
+  onUpdateJobStatus: null,
+  onEditReview: null,
+  onEditJob: null,
+  onGuestJobManage: null,
+  onVerifyGuestPassword: null,
+};
+
+export function setActionHandlers(handlers) {
+  actionHandlers = { ...actionHandlers, ...handlers };
+}
+
+function isReviewOwner(review) {
+  return isLoggedIn() && review.userId === authState.user?.id;
+}
+
+function isJobOwner(job) {
+  return isLoggedIn() && job.userId === authState.user?.id;
+}
+
+function isGuestJob(job) {
+  return !job.userId;
+}
+
+function canManageGuestJob(job) {
+  return isGuestJob(job) && !!state.guestJobPasswords[job.id];
+}
+
+function renderEditButton(type, id) {
+  return `<button type="button" class="btn btn-outline btn-sm" data-action="edit-${type}" data-id="${id}">수정</button>`;
+}
+
+function renderOwnerActions(type, id) {
+  return `<div class="detail-actions">${renderEditButton(type, id)}${renderDeleteButton(type, id)}</div>`;
+}
 
 export const state = {
   reviews: [],
@@ -19,6 +60,12 @@ export const state = {
   regionFilter: 'all',
   selectedRating: 0,
   loading: false,
+  editingReviewId: null,
+  editingJobId: null,
+  editingJobStatus: 'open',
+  /** 비회원 구인글 인증된 비밀번호 (세션 메모리) */
+  guestJobPasswords: {},
+  pendingGuestJobId: null,
 };
 
 export const DOM = {
@@ -62,6 +109,13 @@ export const DOM = {
   jobDetailTitle: document.getElementById('job-detail-title'),
   jobDetailSubtitle: document.getElementById('job-detail-subtitle'),
   jobDetailBody: document.getElementById('job-detail-body'),
+  jobPasswordModal: document.getElementById('job-password-modal'),
+  jobPasswordForm: document.getElementById('job-password-form'),
+  hiringPasswordGroup: document.getElementById('hiring-password-group'),
+  hiringModalTitle: document.getElementById('hiring-modal-title'),
+  hiringSubmitBtn: document.getElementById('hiring-submit-btn'),
+  reviewModalTitle: document.getElementById('modal-title'),
+  reviewSubmitBtn: document.getElementById('review-submit-btn'),
   toast: document.getElementById('toast'),
 };
 
@@ -105,12 +159,15 @@ function createJobCardHTML(job) {
   const q = state.jobSearch;
   const summary = job.description || `${job.workHours} · 시급 ${job.hourlyWage}`;
   const short = summary.length > 80 ? `${summary.slice(0, 80)}…` : summary;
+  const statusClass = getJobStatusBadgeClass(job.status);
+  const statusLabel = getJobStatusLabel(job.status);
+  const closedClass = job.status === 'closed' ? ' job-card-closed' : '';
 
   return `
-    <article class="job-card" data-id="${job.id}" tabindex="0" role="button">
+    <article class="job-card${closedClass}" data-id="${job.id}" tabindex="0" role="button">
       <div class="job-card-header">
         <h3 class="job-card-title">${highlightText(job.cafeName, q)}</h3>
-        <span class="job-badge job-badge-hiring">구인</span>
+        <span class="job-badge ${statusClass}">${statusLabel}</span>
       </div>
       <div class="review-meta">
         <span class="review-tag">${highlightText(job.region, q)}</span>
@@ -124,6 +181,67 @@ function createJobCardHTML(job) {
     </article>`;
 }
 
+function renderDeleteButton(type, id, label = '삭제') {
+  return `<button type="button" class="btn btn-danger btn-sm" data-action="delete-${type}" data-id="${id}">${label}</button>`;
+}
+
+function renderJobStatusControl(job) {
+  const isOpen = job.status !== 'closed';
+  return `
+    <div class="detail-status-control">
+      <span class="detail-status-label">모집 상태</span>
+      <div class="status-toggle" role="group" aria-label="모집 상태 변경">
+        <button type="button" class="status-btn${isOpen ? ' status-btn-active status-btn-open' : ''}" data-action="set-status" data-status="open">모집중</button>
+        <button type="button" class="status-btn${!isOpen ? ' status-btn-active status-btn-closed' : ''}" data-action="set-status" data-status="closed">모집완료</button>
+      </div>
+    </div>`;
+}
+
+function bindDetailActions(container) {
+  container.querySelectorAll('[data-action="delete-review"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionHandlers.onDeleteReview?.(btn.dataset.id);
+    });
+  });
+
+  container.querySelectorAll('[data-action="delete-job"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionHandlers.onDeleteJob?.(btn.dataset.id);
+    });
+  });
+
+  container.querySelectorAll('[data-action="edit-review"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionHandlers.onEditReview?.(btn.dataset.id);
+    });
+  });
+
+  container.querySelectorAll('[data-action="edit-job"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionHandlers.onEditJob?.(btn.dataset.id);
+    });
+  });
+
+  container.querySelectorAll('[data-action="guest-manage"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionHandlers.onGuestJobManage?.(btn.dataset.id);
+    });
+  });
+
+  container.querySelectorAll('[data-action="set-status"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const jobId = container.dataset.jobId;
+      actionHandlers.onUpdateJobStatus?.(jobId, btn.dataset.status);
+    });
+  });
+}
+
 function bindCardClicks(container, type) {
   const selector = type === 'review' ? '.review-card' : '.job-card';
   container.querySelectorAll(selector).forEach((card) => {
@@ -134,6 +252,34 @@ function bindCardClicks(container, type) {
     card.addEventListener('click', open);
     card.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+    });
+  });
+
+  container.querySelectorAll('[data-action="delete-review"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionHandlers.onDeleteReview?.(btn.dataset.id);
+    });
+  });
+
+  container.querySelectorAll('[data-action="delete-job"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionHandlers.onDeleteJob?.(btn.dataset.id);
+    });
+  });
+
+  container.querySelectorAll('[data-action="edit-review"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionHandlers.onEditReview?.(btn.dataset.id);
+    });
+  });
+
+  container.querySelectorAll('[data-action="edit-job"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionHandlers.onEditJob?.(btn.dataset.id);
     });
   });
 }
@@ -232,6 +378,10 @@ function openReviewDetail(id) {
   const review = state.reviews.find((r) => r.id === id);
   if (!review) return;
 
+  const ownerActions = isReviewOwner(review)
+    ? `<div class="detail-footer">${renderOwnerActions('review', review.id)}</div>`
+    : '';
+
   DOM.detailTitle.textContent = review.cafeName;
   DOM.detailRegion.textContent = review.region;
   DOM.detailBody.innerHTML = `
@@ -247,17 +397,43 @@ function openReviewDetail(id) {
     </div>
     ${review.pros ? `<div class="detail-section"><h4 class="detail-section-title">장점</h4><p class="detail-section-text">${escapeHtml(review.pros)}</p></div>` : ''}
     ${review.cons ? `<div class="detail-section"><h4 class="detail-section-title">단점</h4><p class="detail-section-text cons">${escapeHtml(review.cons)}</p></div>` : ''}
-    <p style="font-size:0.75rem;color:var(--gray-400);margin-top:16px;">작성일: ${formatDate(review.createdAt)}</p>`;
+    <p class="detail-date">작성일: ${formatDate(review.createdAt)}</p>
+    ${ownerActions}`;
 
+  bindDetailActions(DOM.detailBody);
   openModal(DOM.detailModal);
 }
 
-function openJobDetail(id) {
+export function openJobDetail(id) {
   const job = state.jobs.find((j) => j.id === id);
   if (!job) return;
 
+  const isOwner = isJobOwner(job);
+  const isGuestVerified = canManageGuestJob(job);
+  const statusBadge = `<span class="job-badge ${getJobStatusBadgeClass(job.status)}">${getJobStatusLabel(job.status)}</span>`;
+
+  let ownerSection = `<div class="detail-status-display">${statusBadge}</div>`;
+
+  if (isOwner || isGuestVerified) {
+    ownerSection = `
+      <div class="detail-footer detail-footer-owner">
+        ${renderJobStatusControl(job)}
+        <div class="detail-actions">
+          ${renderEditButton('job', job.id)}
+          ${renderDeleteButton('job', job.id)}
+        </div>
+      </div>`;
+  } else if (isGuestJob(job)) {
+    ownerSection = `
+      <div class="detail-footer">
+        <p class="detail-guest-hint">비회원으로 작성한 글입니다. 수정·삭제하려면 작성 시 설정한 비밀번호가 필요합니다.</p>
+        <button type="button" class="btn btn-outline btn-sm" data-action="guest-manage" data-id="${job.id}">글 관리</button>
+      </div>`;
+  }
+
   DOM.jobDetailTitle.textContent = job.cafeName;
   DOM.jobDetailSubtitle.textContent = job.region;
+  DOM.jobDetailBody.dataset.jobId = job.id;
   DOM.jobDetailBody.innerHTML = `
     <div class="detail-grid">
       <div class="detail-item"><p class="detail-label">모집 직무</p><p class="detail-value">${escapeHtml(job.position)}</p></div>
@@ -266,12 +442,14 @@ function openJobDetail(id) {
       <div class="detail-item"><p class="detail-label">연락 방법</p><p class="detail-value">${escapeHtml(job.contact)}</p></div>
     </div>
     ${job.description ? `<div class="detail-section"><h4 class="detail-section-title">상세 설명</h4><p class="detail-section-text">${escapeHtml(job.description)}</p></div>` : ''}
-    <p style="font-size:0.75rem;color:var(--gray-400);margin-top:16px;">등록일: ${formatDate(job.createdAt)}</p>`;
+    <p class="detail-date">등록일: ${formatDate(job.createdAt)}</p>
+    ${ownerSection}`;
 
+  bindDetailActions(DOM.jobDetailBody);
   openModal(DOM.jobDetailModal);
 }
 
-export async function renderMyPage(myReviews) {
+export async function renderMyPage(myReviews, myJobs = []) {
   const nickname = getNickname();
   const initial = nickname.charAt(0).toUpperCase();
 
@@ -289,10 +467,34 @@ export async function renderMyPage(myReviews) {
         ? '<p class="mypage-empty">작성한 후기가 없습니다.</p>'
         : myReviews.map((r) => `
           <div class="mypage-item">
-            <span class="mypage-item-title">${escapeHtml(r.cafeName)} · ${escapeHtml(r.region)}</span>
-            <time style="font-size:0.75rem;color:var(--gray-400)">${formatDate(r.createdAt)}</time>
+            <div class="mypage-item-info">
+              <span class="mypage-item-title">${escapeHtml(r.cafeName)} · ${escapeHtml(r.region)}</span>
+              <time class="mypage-item-date">${formatDate(r.createdAt)}</time>
+            </div>
+            <div class="mypage-item-actions">
+              ${renderEditButton('review', r.id)}
+              ${renderDeleteButton('review', r.id)}
+            </div>
+          </div>`).join('')}
+    </div>
+    <h3 class="mypage-section-title">내가 작성한 구인글 (${myJobs.length})</h3>
+    <div class="mypage-list">
+      ${myJobs.length === 0
+        ? '<p class="mypage-empty">작성한 구인글이 없습니다.</p>'
+        : myJobs.map((j) => `
+          <div class="mypage-item">
+            <div class="mypage-item-info">
+              <span class="mypage-item-title">${escapeHtml(j.cafeName)} · ${escapeHtml(j.region)}</span>
+              <span class="job-badge ${getJobStatusBadgeClass(j.status)}">${getJobStatusLabel(j.status)}</span>
+            </div>
+            <div class="mypage-item-actions">
+              ${renderEditButton('job', j.id)}
+              ${renderDeleteButton('job', j.id)}
+            </div>
           </div>`).join('')}
     </div>`;
+
+  bindDetailActions(DOM.mypageBody);
 }
 
 export function openModal(modal) {
@@ -308,15 +510,98 @@ export function closeModal(modal) {
 }
 
 export function closeAllModals() {
-  [DOM.writeModal, DOM.detailModal, DOM.authModal, DOM.mypageModal, DOM.hiringModal, DOM.jobDetailModal]
+  [DOM.writeModal, DOM.detailModal, DOM.authModal, DOM.mypageModal, DOM.hiringModal, DOM.jobDetailModal, DOM.jobPasswordModal]
     .forEach(closeModal);
   document.body.style.overflow = '';
 }
 
 export function openWriteModal() {
+  state.editingReviewId = null;
   resetReviewForm();
+  DOM.reviewModalTitle.textContent = '근무 후기 작성';
+  DOM.reviewSubmitBtn.textContent = '후기 등록';
   openModal(DOM.writeModal);
   DOM.reviewForm.querySelector('#cafe-name')?.focus();
+}
+
+export function openWriteModalForEdit(review) {
+  state.editingReviewId = review.id;
+  DOM.reviewForm.querySelector('#cafe-name').value = review.cafeName;
+  DOM.reviewForm.querySelector('#region').value = review.region;
+  DOM.reviewForm.querySelector('#work-period').value = review.workPeriod;
+  DOM.reviewForm.querySelector('#position').value = review.position;
+  DOM.reviewForm.querySelector('#hourly-wage').value = review.hourlyWage || '';
+  DOM.reviewForm.querySelector('#atmosphere').value = review.atmosphere || '';
+  DOM.reviewForm.querySelector('#pros').value = review.pros || '';
+  DOM.reviewForm.querySelector('#cons').value = review.cons || '';
+  state.selectedRating = review.rating;
+  DOM.ratingInput.value = review.rating;
+  updateStarButtons();
+  DOM.ratingHint.textContent = `${review.rating}점을 선택했습니다`;
+  DOM.reviewModalTitle.textContent = '근무 후기 수정';
+  DOM.reviewSubmitBtn.textContent = '후기 수정';
+  openModal(DOM.writeModal);
+}
+
+export function openHiringModalCreate() {
+  state.editingJobId = null;
+  state.editingJobStatus = 'open';
+  DOM.hiringForm.reset();
+  updateHiringFormMode();
+  openModal(DOM.hiringModal);
+  DOM.hiringForm.querySelector('#hiring-cafe')?.focus();
+}
+
+export function openHiringModalForEdit(job) {
+  state.editingJobId = job.id;
+  state.editingJobStatus = job.status || 'open';
+  DOM.hiringForm.querySelector('#hiring-cafe').value = job.cafeName;
+  DOM.hiringForm.querySelector('#hiring-region').value = job.region;
+  DOM.hiringForm.querySelector('#hiring-position').value = job.position;
+  DOM.hiringForm.querySelector('#hiring-wage').value = job.hourlyWage;
+  DOM.hiringForm.querySelector('#hiring-hours').value = job.workHours;
+  DOM.hiringForm.querySelector('#hiring-contact').value = job.contact;
+  DOM.hiringForm.querySelector('#hiring-desc').value = job.description || '';
+  updateHiringFormMode(true);
+  openModal(DOM.hiringModal);
+}
+
+export function updateHiringFormMode(isEdit = false) {
+  const loggedIn = isLoggedIn();
+  DOM.hiringPasswordGroup.classList.toggle('hidden', loggedIn || isEdit);
+  DOM.hiringModalTitle.textContent = isEdit ? '구인글 수정' : '구인글 작성';
+  DOM.hiringSubmitBtn.textContent = isEdit ? '구인글 수정' : '구인글 등록';
+
+  const hint = DOM.hiringForm.querySelector('.hiring-form-hint');
+  const passwordInput = DOM.hiringForm.querySelector('#hiring-password');
+  if (hint) {
+    hint.textContent = loggedIn
+      ? '로그인 상태로 작성하면 수정·삭제가 계정과 연결됩니다.'
+      : '비회원 작성 시 비밀번호가 필요합니다. 수정·삭제·모집 상태 변경에 사용됩니다.';
+  }
+  if (passwordInput) {
+    passwordInput.required = !loggedIn && !isEdit;
+  }
+}
+
+export function openGuestPasswordModal(jobId) {
+  state.pendingGuestJobId = jobId;
+  DOM.jobPasswordForm.reset();
+  openModal(DOM.jobPasswordModal);
+  DOM.jobPasswordForm.querySelector('#job-manage-password')?.focus();
+}
+
+export function closeGuestPasswordModal() {
+  state.pendingGuestJobId = null;
+  closeModal(DOM.jobPasswordModal);
+}
+
+export function getGuestJobPassword(jobId) {
+  return state.guestJobPasswords[jobId] || null;
+}
+
+export function setGuestJobPassword(jobId, password) {
+  state.guestJobPasswords[jobId] = password;
 }
 
 export function openAuthModal(tab = 'login') {

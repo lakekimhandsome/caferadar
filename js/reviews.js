@@ -72,3 +72,43 @@ export async function createReview(userId, form) {
 
   return mapReviewFromDb(data);
 }
+
+/** 본인 후기 삭제 */
+export async function deleteReview(id) {
+  const supabase = getSupabase();
+  const { error } = await supabase.from('reviews').delete().eq('id', id);
+
+  if (error) {
+    console.error('[Reviews] 삭제 실패:', error.message);
+    throw new Error('후기 삭제에 실패했습니다.');
+  }
+}
+
+/** 본인 후기 수정 */
+export async function updateReview(id, form) {
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from('reviews')
+    .update({
+      cafe_name: form.cafeName.trim(),
+      region: form.region.trim(),
+      position: form.position,
+      wage: form.hourlyWage?.trim() || null,
+      period: form.workPeriod.trim(),
+      atmosphere: form.atmosphere?.trim() || null,
+      pros: form.pros?.trim() || null,
+      cons: form.cons?.trim() || null,
+      rating: form.rating,
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[Reviews] 수정 실패:', error.message);
+    throw new Error('후기 수정에 실패했습니다.');
+  }
+
+  return mapReviewFromDb(data);
+}
