@@ -780,6 +780,12 @@ ul {
   stroke-linejoin: round;
 }
 
+.empty-emoji {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
 .empty-title {
   font-size: 1.125rem;
   font-weight: 600;
@@ -824,6 +830,15 @@ ul {
   background: var(--color-primary);
   border-color: var(--color-primary);
   color: var(--white);
+}
+
+.jobs-panel.hidden {
+  display: none;
+}
+
+.job-badge-seeker {
+  background: var(--brown-100);
+  color: var(--brown-700);
 }
 
 .jobs-toolbar {
@@ -1291,6 +1306,30 @@ ul {
   color: var(--color-error);
 }
 
+.nickname-check-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.nickname-check-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.nickname-check-row .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.nickname-check-hint.success {
+  color: #166534;
+}
+
+.nickname-check-hint.error {
+  color: var(--color-error);
+}
+
 /* Star rating input */
 .star-rating {
   display: flex;
@@ -1517,6 +1556,45 @@ ul {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   animation: toastIn 0.3s ease;
+  max-width: calc(100vw - 48px);
+  text-align: center;
+}
+
+.toast-success {
+  background: #166534;
+}
+
+.toast-error {
+  background: #991b1b;
+}
+
+.toast-warning {
+  background: #92400e;
+}
+
+/* Loading overlay */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(250, 247, 242, 0.65);
+  backdrop-filter: blur(2px);
+}
+
+.loading-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--brown-200);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 @keyframes toastIn {
@@ -1689,6 +1767,18 @@ ul {
   .review-grid,
   .job-grid {
     grid-template-columns: 1fr;
+  }
+
+  .jobs-tabs {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+    padding: 12px 16px;
   }
 
   .jobs-toolbar {

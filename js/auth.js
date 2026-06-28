@@ -50,13 +50,72 @@ export function getNickname() {
   return authState.profile?.nickname || authState.user?.email?.split('@')[0] || '회원';
 }
 
+/** 닉네임 중복 확인 */
+export async function checkNicknameAvailable(nickname) {
+  const trimmed = nickname?.trim() || '';
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase.rpc('is_nickname_available', {
+    p_nickname: trimmed,
+  });
+
+  if (error) {
+    console.error('[Auth] 닉네임 확인 실패:', error.message);
+
+    // RPC 미적용 시 profiles 공개 조회로 fallback
+    if (error.code === 'PGRST202' || error.code === '42883') {
+      return checkNicknameAvailableFallback(trimmed);
+    }
+
+    throw new Error('닉네임 확인에 실패했습니다.');
+  }
+
+  return {
+    available: !!data?.available,
+    message: data?.message || (data?.available ? '사용 가능한 닉네임입니다.' : '이미 사용 중인 닉네임입니다.'),
+  };
+}
+
+async function checkNicknameAvailableFallback(nickname) {
+  if (!nickname) {
+    return { available: false, message: '닉네임을 입력해주세요.' };
+  }
+  if (nickname.length < 2) {
+    return { available: false, message: '닉네임은 2자 이상이어야 합니다.' };
+  }
+  if (nickname.length > 20) {
+    return { available: false, message: '닉네임은 20자 이하여야 합니다.' };
+  }
+
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .ilike('nickname', nickname)
+    .limit(1);
+
+  if (error) throw new Error('닉네임 확인에 실패했습니다.');
+
+  const taken = (data || []).length > 0;
+  return {
+    available: !taken,
+    message: taken ? '이미 사용 중인 닉네임입니다.' : '사용 가능한 닉네임입니다.',
+  };
+}
+
 export async function signUp(email, password, nickname) {
+  const trimmedNickname = nickname.trim();
+  const nickCheck = await checkNicknameAvailable(trimmedNickname);
+  if (!nickCheck.available) {
+    return { success: false, message: nickCheck.message };
+  }
+
   const supabase = getSupabase();
 
   const { data, error } = await supabase.auth.signUp({
     email: email.trim(),
     password,
-    options: { data: { nickname: nickname.trim() } },
+    options: { data: { nickname: trimmedNickname } },
   });
 
   if (error) return { success: false, message: translateAuthError(error.message) };

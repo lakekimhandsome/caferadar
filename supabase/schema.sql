@@ -12,16 +12,29 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now()
 );
 
+create index if not exists profiles_nickname_lower_idx on public.profiles (lower(trim(nickname)));
+
+create unique index if not exists profiles_nickname_lower_unique
+  on public.profiles (lower(trim(nickname)));
+
 alter table public.profiles enable row level security;
 
 -- 누구나 닉네임 조회 가능
 create policy "profiles_select_public"
   on public.profiles for select
+  to anon, authenticated
   using (true);
+
+-- 본인 프로필만 생성 (회원가입 트리거가 주 경로, 직접 INSERT 시에도 본인만 허용)
+create policy "profiles_insert_own"
+  on public.profiles for insert
+  to authenticated
+  with check (auth.uid() = id);
 
 -- 본인 프로필만 수정
 create policy "profiles_update_own"
   on public.profiles for update
+  to authenticated
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
@@ -52,21 +65,25 @@ alter table public.reviews enable row level security;
 -- 누구나 후기 조회
 create policy "reviews_select_public"
   on public.reviews for select
+  to anon, authenticated
   using (true);
 
 -- 로그인 회원만 본인 후기 작성
 create policy "reviews_insert_authenticated"
   on public.reviews for insert
+  to authenticated
   with check (auth.uid() = user_id);
 
 -- 본인 후기만 삭제
 create policy "reviews_delete_own"
   on public.reviews for delete
+  to authenticated
   using (auth.uid() = user_id);
 
 -- 본인 후기만 수정
 create policy "reviews_update_own"
   on public.reviews for update
+  to authenticated
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
@@ -96,22 +113,26 @@ alter table public.jobs enable row level security;
 -- 누구나 구인글 조회
 create policy "jobs_select_public"
   on public.jobs for select
+  to anon, authenticated
   using (true);
 
 -- 로그인 회원만 직접 구인글 작성 (비회원은 RPC)
 create policy "jobs_insert_authenticated"
   on public.jobs for insert
+  to authenticated
   with check (auth.uid() = user_id and user_id is not null);
 
 -- 본인 구인글만 수정 (모집 상태 변경)
 create policy "jobs_update_own"
   on public.jobs for update
+  to authenticated
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
 -- 본인 구인글만 삭제
 create policy "jobs_delete_own"
   on public.jobs for delete
+  to authenticated
   using (auth.uid() = user_id);
 
 -- ─────────────────────────────────────────
@@ -368,6 +389,7 @@ begin
   end if;
 
   delete from public.jobs where user_id = v_uid;
+  delete from public.job_seekers where user_id = v_uid;
   delete from auth.users where id = v_uid;
 
   return json_build_object('success', true);
@@ -377,3 +399,83 @@ $$;
 revoke all on function public.delete_own_account() from public;
 revoke all on function public.delete_own_account() from anon;
 grant execute on function public.delete_own_account() to authenticated;
+
+-- ─────────────────────────────────────────
+-- 7. 닉네임 중복 확인
+-- ─────────────────────────────────────────
+
+create or replace function public.is_nickname_available(p_nickname text)
+returns json
+language plpgsql
+security definer
+set search_path = public
+stable
+as $$
+declare
+  v_nick text := trim(p_nickname);
+  v_taken boolean;
+begin
+  if v_nick = '' then
+    return json_build_object('available', false, 'message', '닉네임을 입력해주세요.');
+  end if;
+
+  if length(v_nick) < 2 then
+    return json_build_object('available', false, 'message', '닉네임은 2자 이상이어야 합니다.');
+  end if;
+
+  if length(v_nick) > 20 then
+    return json_build_object('available', false, 'message', '닉네임은 20자 이하여야 합니다.');
+  end if;
+
+  select exists (
+    select 1 from public.profiles
+    where lower(trim(nickname)) = lower(v_nick)
+  ) into v_taken;
+
+  if v_taken then
+    return json_build_object('available', false, 'message', '이미 사용 중인 닉네임입니다.');
+  end if;
+
+  return json_build_object('available', true, 'message', '사용 가능한 닉네임입니다.');
+end;
+$$;
+
+grant execute on function public.is_nickname_available(text) to anon, authenticated;
+
+-- ─────────────────────────────────────────
+-- 8. job_seekers — 구직글 (로그인 회원만 작성)
+-- ─────────────────────────────────────────
+create table if not exists public.job_seekers (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  region text not null,
+  position text not null,
+  experience text,
+  availability text not null,
+  contact text not null,
+  introduction text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists job_seekers_created_at_idx on public.job_seekers (created_at desc);
+create index if not exists job_seekers_user_id_idx on public.job_seekers (user_id);
+create index if not exists job_seekers_region_idx on public.job_seekers (region);
+
+alter table public.job_seekers enable row level security;
+
+create policy "job_seekers_select_public"
+  on public.job_seekers for select
+  using (true);
+
+create policy "job_seekers_insert_authenticated"
+  on public.job_seekers for insert
+  with check (auth.uid() = user_id);
+
+create policy "job_seekers_update_own"
+  on public.job_seekers for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create policy "job_seekers_delete_own"
+  on public.job_seekers for delete
+  using (auth.uid() = user_id);

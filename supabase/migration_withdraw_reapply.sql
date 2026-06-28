@@ -17,6 +17,7 @@ begin
   end if;
 
   delete from public.jobs where user_id = v_uid;
+  delete from public.job_seekers where user_id = v_uid;
   delete from auth.users where id = v_uid;
 
   return json_build_object('success', true);

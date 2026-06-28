@@ -12,7 +12,13 @@ export function getSupabase() {
     if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
       console.warn('[CafeRadar] config.js에 Supabase URL/Key를 설정해주세요.');
     }
-    client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
   }
   return client;
 }

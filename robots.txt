@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://caferadar.github.io/caferadar/sitemap.xml

@@ -17,9 +17,11 @@ import { isLoggedIn, getNickname, authState } from './auth.js';
 let actionHandlers = {
   onDeleteReview: null,
   onDeleteJob: null,
+  onDeleteSeeker: null,
   onUpdateJobStatus: null,
   onEditReview: null,
   onEditJob: null,
+  onEditSeeker: null,
   onGuestJobManage: null,
   onOpenWithdraw: null,
 };
@@ -34,6 +36,10 @@ function isReviewOwner(review) {
 
 function isJobOwner(job) {
   return isLoggedIn() && job.userId === authState.user?.id;
+}
+
+function isSeekerOwner(seeker) {
+  return isLoggedIn() && seeker.userId === authState.user?.id;
 }
 
 function isGuestJob(job) {
@@ -55,13 +61,17 @@ function renderOwnerActions(type, id) {
 export const state = {
   reviews: [],
   jobs: [],
+  jobSeekers: [],
   reviewSearch: '',
   jobSearch: '',
+  seekerSearch: '',
+  jobTab: 'hiring',
   regionFilter: 'all',
   selectedRating: 0,
   loading: false,
   editingReviewId: null,
   editingJobId: null,
+  editingSeekerId: null,
   editingJobStatus: 'open',
   /** 비회원 구인글 인증된 비밀번호 (세션 메모리) */
   guestJobPasswords: {},
@@ -78,6 +88,9 @@ export const DOM = {
   searchInput: document.getElementById('search-input'),
   reviewsSearchInput: document.getElementById('reviews-search-input'),
   jobsSearchInput: document.getElementById('jobs-search-input'),
+  seekersSearchInput: document.getElementById('seekers-search-input'),
+  hiringPanel: document.getElementById('hiring-panel'),
+  seekingPanel: document.getElementById('seeking-panel'),
   recentReviews: document.getElementById('recent-reviews'),
   reviewList: document.getElementById('review-list'),
   reviewsCountText: document.getElementById('reviews-count-text'),
@@ -89,6 +102,17 @@ export const DOM = {
   jobsCountText: document.getElementById('jobs-count-text'),
   jobList: document.getElementById('job-list'),
   jobEmpty: document.getElementById('job-empty'),
+  seekerList: document.getElementById('seeker-list'),
+  seekerEmpty: document.getElementById('seeker-empty'),
+  seekingModal: document.getElementById('seeking-modal'),
+  seekingForm: document.getElementById('seeking-form'),
+  seekerDetailModal: document.getElementById('seeker-detail-modal'),
+  seekerDetailTitle: document.getElementById('seeker-detail-title'),
+  seekerDetailSubtitle: document.getElementById('seeker-detail-subtitle'),
+  seekerDetailBody: document.getElementById('seeker-detail-body'),
+  seekingModalTitle: document.getElementById('seeking-modal-title'),
+  seekingSubmitBtn: document.getElementById('seeking-submit-btn'),
+  loadingOverlay: document.getElementById('loading-overlay'),
   writeModal: document.getElementById('write-modal'),
   detailModal: document.getElementById('detail-modal'),
   authModal: document.getElementById('auth-modal'),
@@ -122,12 +146,34 @@ export const DOM = {
 };
 
 let toastTimer = null;
+let loadingCount = 0;
 
-export function showToast(message) {
+export function setLoading(active) {
+  state.loading = active;
+  if (DOM.loadingOverlay) {
+    DOM.loadingOverlay.classList.toggle('hidden', !active);
+    DOM.loadingOverlay.setAttribute('aria-hidden', active ? 'false' : 'true');
+  }
+}
+
+export async function withLoading(fn) {
+  loadingCount += 1;
+  setLoading(true);
+  try {
+    return await fn();
+  } finally {
+    loadingCount = Math.max(0, loadingCount - 1);
+    if (loadingCount === 0) setLoading(false);
+  }
+}
+
+/** @param {'default'|'success'|'error'|'warning'} type */
+export function showToast(message, type = 'default') {
   DOM.toast.textContent = message;
-  DOM.toast.classList.remove('hidden');
+  DOM.toast.classList.remove('hidden', 'toast-success', 'toast-error', 'toast-warning');
+  if (type !== 'default') DOM.toast.classList.add(`toast-${type}`);
   if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => DOM.toast.classList.add('hidden'), 3000);
+  toastTimer = setTimeout(() => DOM.toast.classList.add('hidden'), 3200);
 }
 
 export function renderAuthNav() {
@@ -153,6 +199,29 @@ function createReviewCardHTML(review, highlight = false) {
       <div class="review-footer">
         <span class="review-position">${escapeHtml(review.position)}</span>
         <time class="review-date">${formatDate(review.createdAt)}</time>
+      </div>
+    </article>`;
+}
+
+function createSeekerCardHTML(seeker) {
+  const q = state.seekerSearch;
+  const summary = seeker.introduction || `${seeker.experience || ''} · ${seeker.availability}`.trim();
+  const short = summary.length > 80 ? `${summary.slice(0, 80)}…` : summary;
+
+  return `
+    <article class="job-card seeker-card" data-id="${seeker.id}" data-type="seeker" tabindex="0" role="button">
+      <div class="job-card-header">
+        <h3 class="job-card-title">${highlightText(seeker.position, q)}</h3>
+        <span class="job-badge job-badge-seeker">구직</span>
+      </div>
+      <div class="review-meta">
+        <span class="review-tag">${highlightText(seeker.region, q)}</span>
+        <span class="review-tag">${escapeHtml(seeker.availability)}</span>
+      </div>
+      <p class="job-summary">${escapeHtml(short)}</p>
+      <div class="job-card-footer">
+        <span class="job-card-position">${seeker.experience ? escapeHtml(seeker.experience) : '경력 미입력'}</span>
+        <time class="job-card-date">${formatDate(seeker.createdAt)}</time>
       </div>
     </article>`;
 }
@@ -214,6 +283,13 @@ function bindDetailActions(container) {
     });
   });
 
+  container.querySelectorAll('[data-action="delete-seeker"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionHandlers.onDeleteSeeker?.(btn.dataset.id);
+    });
+  });
+
   container.querySelectorAll('[data-action="edit-review"]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -225,6 +301,13 @@ function bindDetailActions(container) {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       actionHandlers.onEditJob?.(btn.dataset.id);
+    });
+  });
+
+  container.querySelectorAll('[data-action="edit-seeker"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionHandlers.onEditSeeker?.(btn.dataset.id);
     });
   });
 
@@ -256,6 +339,7 @@ function bindCardClicks(container, type) {
   container.querySelectorAll(selector).forEach((card) => {
     const open = () => {
       if (type === 'review') openReviewDetail(card.dataset.id);
+      else if (card.dataset.type === 'seeker') openSeekerDetail(card.dataset.id);
       else openJobDetail(card.dataset.id);
     };
     card.addEventListener('click', open);
@@ -326,7 +410,7 @@ export function renderReviewList() {
       text.textContent = '다른 지역을 선택하거나 후기를 작성해 보세요.';
     } else {
       title.textContent = '아직 등록된 후기가 없어요';
-      text.textContent = '첫 번째 후기를 작성하고 다른 근무자들에게 도움을 주세요.';
+      text.textContent = '첫 번째 후기를 남겨보세요.';
     }
     return;
   }
@@ -359,13 +443,20 @@ export function renderJobList() {
   const filtered = state.jobs;
   const q = state.jobSearch.trim();
 
-  DOM.jobsCountText.textContent = q
-    ? `"${q}" 검색 결과 ${filtered.length}건`
-    : `총 ${filtered.length}개의 구인글이 있습니다.`;
+  updateJobsCountText();
 
   if (filtered.length === 0) {
     DOM.jobList.innerHTML = '';
     DOM.jobEmpty.classList.remove('hidden');
+    const title = DOM.jobEmpty.querySelector('.empty-title');
+    const text = DOM.jobEmpty.querySelector('.empty-text');
+    if (q) {
+      title.textContent = '검색 결과가 없어요';
+      text.textContent = '다른 키워드로 검색하거나, 새 구인글을 작성해 보세요.';
+    } else {
+      title.textContent = '등록된 구인글이 없어요';
+      text.textContent = '첫 번째 채용 정보를 등록해보세요.';
+    }
     return;
   }
 
@@ -374,12 +465,68 @@ export function renderJobList() {
   bindCardClicks(DOM.jobList, 'job');
 }
 
+export function renderSeekerList() {
+  const filtered = state.jobSeekers;
+  const q = state.seekerSearch.trim();
+
+  updateJobsCountText();
+
+  if (filtered.length === 0) {
+    DOM.seekerList.innerHTML = '';
+    DOM.seekerEmpty.classList.remove('hidden');
+    const title = DOM.seekerEmpty.querySelector('.empty-title');
+    const text = DOM.seekerEmpty.querySelector('.empty-text');
+    if (q) {
+      title.textContent = '검색 결과가 없어요';
+      text.textContent = '다른 키워드로 검색하거나, 새 구직글을 작성해 보세요.';
+    } else {
+      title.textContent = '등록된 구직글이 없어요';
+      text.textContent = '첫 번째 자기소개를 등록해보세요.';
+    }
+    return;
+  }
+
+  DOM.seekerEmpty.classList.add('hidden');
+  DOM.seekerList.innerHTML = filtered.map(createSeekerCardHTML).join('');
+  bindCardClicks(DOM.seekerList, 'job');
+}
+
+function updateJobsCountText() {
+  const isHiring = state.jobTab === 'hiring';
+  const q = isHiring ? state.jobSearch.trim() : state.seekerSearch.trim();
+  const count = isHiring ? state.jobs.length : state.jobSeekers.length;
+  const label = isHiring ? '구인글' : '구직글';
+
+  DOM.jobsCountText.textContent = q
+    ? `"${q}" 검색 결과 ${count}건`
+    : `총 ${count}개의 ${label}이 있습니다.`;
+}
+
+export function switchJobTab(tab) {
+  state.jobTab = tab;
+  const isHiring = tab === 'hiring';
+
+  document.querySelectorAll('.tab-btn[data-job-tab]').forEach((btn) => {
+    const active = btn.dataset.jobTab === tab;
+    btn.classList.toggle('tab-active', active);
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+
+  DOM.hiringPanel?.classList.toggle('hidden', !isHiring);
+  DOM.seekingPanel?.classList.toggle('hidden', isHiring);
+
+  updateJobsCountText();
+  if (isHiring) renderJobList();
+  else renderSeekerList();
+}
+
 export function renderAll() {
   updateStats();
   renderRegionFilters();
   renderRecentReviews();
   renderReviewList();
   renderJobList();
+  renderSeekerList();
   renderAuthNav();
 }
 
@@ -458,7 +605,33 @@ export function openJobDetail(id) {
   openModal(DOM.jobDetailModal);
 }
 
-export async function renderMyPage(myReviews, myJobs = []) {
+export function openSeekerDetail(id) {
+  const seeker = state.jobSeekers.find((s) => s.id === id);
+  if (!seeker) return;
+
+  const ownerActions = isSeekerOwner(seeker)
+    ? `<div class="detail-footer">${renderOwnerActions('seeker', seeker.id)}</div>`
+    : '';
+
+  DOM.seekerDetailTitle.textContent = seeker.position;
+  DOM.seekerDetailSubtitle.textContent = seeker.region;
+  DOM.seekerDetailBody.innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-item"><p class="detail-label">희망 지역</p><p class="detail-value">${escapeHtml(seeker.region)}</p></div>
+      <div class="detail-item"><p class="detail-label">희망 직무</p><p class="detail-value">${escapeHtml(seeker.position)}</p></div>
+      <div class="detail-item"><p class="detail-label">경력 · 경험</p><p class="detail-value">${escapeHtml(seeker.experience || '미입력')}</p></div>
+      <div class="detail-item"><p class="detail-label">가능 시간</p><p class="detail-value">${escapeHtml(seeker.availability)}</p></div>
+      <div class="detail-item"><p class="detail-label">연락 방법</p><p class="detail-value">${escapeHtml(seeker.contact)}</p></div>
+    </div>
+    ${seeker.introduction ? `<div class="detail-section"><h4 class="detail-section-title">자기소개</h4><p class="detail-section-text">${escapeHtml(seeker.introduction)}</p></div>` : ''}
+    <p class="detail-date">등록일: ${formatDate(seeker.createdAt)}</p>
+    ${ownerActions}`;
+
+  bindDetailActions(DOM.seekerDetailBody);
+  openModal(DOM.seekerDetailModal);
+}
+
+export async function renderMyPage(myReviews, myJobs = [], mySeekers = []) {
   const nickname = getNickname();
   const initial = nickname.charAt(0).toUpperCase();
 
@@ -502,6 +675,22 @@ export async function renderMyPage(myReviews, myJobs = []) {
             </div>
           </div>`).join('')}
     </div>
+    <h3 class="mypage-section-title">내가 작성한 구직글 (${mySeekers.length})</h3>
+    <div class="mypage-list">
+      ${mySeekers.length === 0
+        ? '<p class="mypage-empty">작성한 구직글이 없습니다.</p>'
+        : mySeekers.map((s) => `
+          <div class="mypage-item">
+            <div class="mypage-item-info">
+              <span class="mypage-item-title">${escapeHtml(s.position)} · ${escapeHtml(s.region)}</span>
+              <time class="mypage-item-date">${formatDate(s.createdAt)}</time>
+            </div>
+            <div class="mypage-item-actions">
+              ${renderEditButton('seeker', s.id)}
+              ${renderDeleteButton('seeker', s.id)}
+            </div>
+          </div>`).join('')}
+    </div>
     <div class="mypage-danger">
       <h3 class="mypage-danger-title">회원 탈퇴</h3>
       <p class="mypage-danger-text">탈퇴 시 프로필과 작성한 후기가 삭제되며, 로그인으로 작성한 구인글도 함께 삭제됩니다. 이 작업은 되돌릴 수 없습니다.</p>
@@ -530,7 +719,7 @@ export function closeModal(modal) {
 }
 
 export function closeAllModals() {
-  [DOM.writeModal, DOM.detailModal, DOM.authModal, DOM.mypageModal, DOM.hiringModal, DOM.jobDetailModal, DOM.jobPasswordModal, DOM.withdrawModal]
+  [DOM.writeModal, DOM.detailModal, DOM.authModal, DOM.mypageModal, DOM.hiringModal, DOM.jobDetailModal, DOM.jobPasswordModal, DOM.withdrawModal, DOM.seekingModal, DOM.seekerDetailModal]
     .forEach(closeModal);
   document.body.style.overflow = '';
 }
@@ -626,7 +815,20 @@ export function setGuestJobPassword(jobId, password) {
 
 export function openAuthModal(tab = 'login') {
   switchAuthTab(tab);
+  if (tab === 'signup') resetNicknameCheck();
   openModal(DOM.authModal);
+}
+
+export function resetNicknameCheck() {
+  setNicknameCheckHint('');
+}
+
+export function setNicknameCheckHint(message, type = '') {
+  const hint = document.getElementById('nickname-check-hint');
+  if (!hint) return;
+  hint.textContent = message;
+  hint.classList.remove('success', 'error');
+  if (type) hint.classList.add(type);
 }
 
 export function switchAuthTab(tab) {
@@ -637,6 +839,7 @@ export function switchAuthTab(tab) {
   DOM.loginForm.classList.toggle('hidden', !isLogin);
   DOM.signupForm.classList.toggle('hidden', isLogin);
   document.getElementById('auth-modal-title').textContent = isLogin ? '로그인' : '회원가입';
+  if (!isLogin) resetNicknameCheck();
 }
 
 export function resetReviewForm() {
@@ -662,6 +865,32 @@ export function syncReviewSearchInputs(value, source) {
 
 export function syncJobSearchInputs(value, source) {
   if (source !== DOM.jobsSearchInput) DOM.jobsSearchInput.value = value;
+}
+
+export function syncSeekerSearchInputs(value, source) {
+  if (source !== DOM.seekersSearchInput) DOM.seekersSearchInput.value = value;
+}
+
+export function openSeekingModalCreate() {
+  state.editingSeekerId = null;
+  DOM.seekingForm.reset();
+  DOM.seekingModalTitle.textContent = '구직글 작성';
+  DOM.seekingSubmitBtn.textContent = '구직글 등록';
+  openModal(DOM.seekingModal);
+  DOM.seekingForm.querySelector('#seeking-region')?.focus();
+}
+
+export function openSeekingModalForEdit(seeker) {
+  state.editingSeekerId = seeker.id;
+  DOM.seekingForm.querySelector('#seeking-region').value = seeker.region;
+  DOM.seekingForm.querySelector('#seeking-position').value = seeker.position;
+  DOM.seekingForm.querySelector('#seeking-experience').value = seeker.experience || '';
+  DOM.seekingForm.querySelector('#seeking-availability').value = seeker.availability;
+  DOM.seekingForm.querySelector('#seeking-contact').value = seeker.contact;
+  DOM.seekingForm.querySelector('#seeking-intro').value = seeker.introduction || '';
+  DOM.seekingModalTitle.textContent = '구직글 수정';
+  DOM.seekingSubmitBtn.textContent = '구직글 수정';
+  openModal(DOM.seekingModal);
 }
 
 export function closeMobileNav() {

@@ -100,12 +100,14 @@ Supabase Dashboard → **SQL Editor** → New query
 
 RLS(Row Level Security) 정책:
 
-- **profiles** — 전체 조회, 본인만 수정
-- **reviews** — 전체 조회, 로그인 회원만 작성/삭제 (본인 user_id)
-- **jobs** — 전체 조회, 비회원 포함 작성 / 로그인 작성자만 수정·삭제 (user_id)
+- **profiles** — 전체 조회, 본인만 생성·수정
+- **reviews** — 전체 조회, 로그인 회원만 작성, 작성자만 수정·삭제
+- **jobs** — 전체 조회, 로그인 작성자는 직접 작성 / 비회원은 RPC, 작성자만 직접 수정·삭제
+
+이미 DB가 있는 경우 [`supabase/migration_rls.sql`](supabase/migration_rls.sql) 을 SQL Editor에서 실행하세요.
 
 > 이미 DB를 생성한 경우 마이그레이션 SQL을 SQL Editor에서 실행하세요.  
-> v2 → v3_reapply → v3_fix_pgcrypto → **migration_withdraw.sql** (탈퇴 기능)
+> v2 → v3_reapply → v3_fix_pgcrypto → **migration_withdraw_reapply.sql** (탈퇴) → **migration_nickname_unique.sql** (닉네임 중복 확인) → **migration_rls.sql** (RLS 정책)
 
 회원가입 시 `profiles` 행은 DB 트리거(`handle_new_user`)로 자동 생성됩니다.
 

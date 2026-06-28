@@ -86,6 +86,21 @@ export function mapJobFromDb(row) {
   };
 }
 
+/** DB snake_case → 앱 camelCase (구직) */
+export function mapJobSeekerFromDb(row) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    region: row.region,
+    position: row.position,
+    experience: row.experience || '',
+    availability: row.availability,
+    contact: row.contact,
+    introduction: row.introduction || '',
+    createdAt: row.created_at,
+  };
+}
+
 /** 구인글 모집 상태 라벨 */
 export function getJobStatusLabel(status) {
   return status === 'closed' ? '모집완료' : '모집중';
