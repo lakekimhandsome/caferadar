@@ -4,95 +4,209 @@
 
 > "일하기 전에, 근무 환경부터 확인하세요."
 
-## 프로젝트 소개
-
-채용 공고만으로는 알기 어려운 카페의 실제 근무 환경 — 시급, 업무 강도, 매장 분위기, 장단점 등을 **실제 근무자의 후기**로 확인할 수 있는 플랫폼입니다.
-
-CafeRadar는 카페 알바·바리스타 구직자와 경험을 나누고 싶은 현직·전직 근무자 모두를 위한 MVP(1차 버전)입니다.
-
 ## 주요 기능
 
 | 기능 | 설명 |
 |------|------|
-| **메인 페이지** | 서비스 소개, CTA 버튼, 최근 등록 후기 3~5개 미리보기 |
-| **후기 목록** | 카드 형태로 카페명, 지역, 근무기간, 평점, 한 줄 요약 표시 |
-| **후기 작성** | 모달 폼으로 카페 정보·근무 경험·별점(1~5) 입력 |
-| **후기 상세** | 카드 클릭 시 장점·단점·시급 등 전체 내용 확인 |
-| **검색** | 카페명으로 실시간 검색 (디바운스 적용) |
-| **지역 필터** | 등록된 지역별 후기 필터링 |
-| **데이터 저장** | 브라우저 `localStorage`에 후기 영구 저장 |
-| **반응형 UI** | 모바일·태블릿·데스크톱 대응 |
+| **회원가입 / 로그인** | Supabase Authentication (이메일 · 비밀번호 · 닉네임) |
+| **근무 후기** | 로그인 회원만 작성, 전체 공개 조회 |
+| **구인글** | 비회원도 작성 가능, Supabase DB 저장 |
+| **검색** | 후기: 카페명·지역 / 구인: 카페명·지역·직무 |
+| **마이페이지** | 닉네임, 내가 작성한 후기 목록 |
+| **GitHub Pages** | 빌드 없이 정적 배포 가능 |
 
 ## 사용 기술
 
-- **HTML5** — 시맨틱 마크업, 접근성 속성(ARIA)
-- **CSS3** — CSS 변수 기반 디자인 시스템, Flexbox/Grid, 반응형 미디어 쿼리
-- **JavaScript (Vanilla)** — 모듈형 코드 구조, localStorage API
-- **Google Fonts** — Inter, Noto Sans KR
+- HTML5, CSS3
+- JavaScript (Vanilla ES Modules)
+- [Supabase JS SDK](https://supabase.com/docs/reference/javascript/introduction) (CDN)
+- Supabase Auth + PostgreSQL
 
-> 별도의 빌드 도구, 프레임워크, 백엔드 없이 순수 정적 파일로 동작합니다.
+## 프로젝트 구조
 
-## 실행 방법
-
-1. 저장소를 클론하거나 `cafe-radar` 폴더로 이동합니다.
-
-```bash
-cd cafe-radar
+```
+caferadar/
+├── index.html          # 메인 페이지
+├── style.css           # 스타일
+├── favicon.svg
+├── js/
+│   ├── config.js       # ★ Supabase URL / Anon Key 설정
+│   ├── supabase.js     # Supabase 클라이언트
+│   ├── auth.js         # 회원가입 · 로그인 · 로그아웃
+│   ├── reviews.js      # 후기 CRUD
+│   ├── jobs.js         # 구인글 CRUD
+│   ├── ui.js           # DOM · 렌더링 · 모달
+│   ├── utils.js        # 유틸리티
+│   └── app.js          # 앱 진입점
+├── supabase/
+│   └── schema.sql      # DB 테이블 · RLS · 트리거
+└── README.md
 ```
 
-2. `index.html`을 브라우저에서 직접 열거나, 로컬 서버로 실행합니다.
+---
 
-**방법 A — 파일 직접 열기**
+## Supabase 설정 방법
 
-```bash
-open index.html        # macOS
-start index.html       # Windows
-xdg-open index.html    # Linux
+### 1. 프로젝트 생성
+
+1. [Supabase](https://supabase.com) 에서 새 프로젝트를 생성합니다.
+2. **Project Settings → API** 에서 아래 값을 복사합니다.
+   - `Project URL`
+   - `anon public` key
+
+### 2. 클라이언트 설정
+
+`js/config.js` 파일 상단의 값을 교체합니다.
+
+```javascript
+export const SUPABASE_URL = 'https://xxxxxxxx.supabase.co';
+export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
 ```
 
-**방법 B — 로컬 서버 (권장)**
+> 이 두 값만 바꾸면 앱이 Supabase와 연동됩니다.
+
+### 3. Authentication 설정
+
+Supabase Dashboard → **Authentication → Providers → Email**
+
+| 항목 | 권장 설정 |
+|------|-----------|
+| Enable Email provider | ✅ 켜기 |
+| Confirm email | 개발 중에는 **끄기** (즉시 로그인). 운영 시 켜기 |
+| Minimum password length | 6 |
+
+**Authentication → URL Configuration**
+
+| 항목 | 값 예시 |
+|------|---------|
+| Site URL | `https://YOUR_USERNAME.github.io/caferadar/` |
+| Redirect URLs | `https://YOUR_USERNAME.github.io/caferadar/**`, `http://localhost:8080/**` |
+
+로컬 개발과 GitHub Pages 배포 URL을 모두 Redirect URLs에 추가하세요.
+
+### 4. Database 생성
+
+Supabase Dashboard → **SQL Editor** → New query
+
+`supabase/schema.sql` 파일 내용을 **전체 복사 후 실행**합니다.
+
+생성되는 테이블:
+
+| 테이블 | 설명 |
+|--------|------|
+| `profiles` | id, nickname, created_at |
+| `reviews` | id, user_id, cafe_name, region, position, wage, period, atmosphere, pros, cons, rating, created_at |
+| `jobs` | id, cafe_name, region, position, wage, work_time, contact, description, created_at |
+
+RLS(Row Level Security) 정책:
+
+- **profiles** — 전체 조회, 본인만 수정
+- **reviews** — 전체 조회, 로그인 회원만 작성 (본인 user_id)
+- **jobs** — 전체 조회, 비회원 포함 누구나 작성
+
+회원가입 시 `profiles` 행은 DB 트리거(`handle_new_user`)로 자동 생성됩니다.
+
+---
+
+## SQL 테이블 생성 스크립트
+
+전체 스크립트는 [`supabase/schema.sql`](supabase/schema.sql) 를 참고하세요.
+
+핵심 테이블 예시:
+
+```sql
+-- profiles
+create table public.profiles (
+  id uuid primary key references auth.users (id) on delete cascade,
+  nickname text not null,
+  created_at timestamptz not null default now()
+);
+
+-- reviews
+create table public.reviews (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  cafe_name text not null,
+  region text not null,
+  position text not null,
+  wage text,
+  period text not null,
+  atmosphere text,
+  pros text,
+  cons text,
+  rating smallint not null check (rating between 1 and 5),
+  created_at timestamptz not null default now()
+);
+
+-- jobs
+create table public.jobs (
+  id uuid primary key default gen_random_uuid(),
+  cafe_name text not null,
+  region text not null,
+  position text not null,
+  wage text not null,
+  work_time text not null,
+  contact text not null,
+  description text,
+  created_at timestamptz not null default now()
+);
+```
+
+RLS 정책과 프로필 자동 생성 트리거는 `schema.sql`에 포함되어 있습니다.
+
+---
+
+## 로컬 실행
+
+ES Module을 사용하므로 **로컬 서버**로 실행하는 것을 권장합니다.
 
 ```bash
+cd caferadar
+
 # Python 3
 python3 -m http.server 8080
 
-# Node.js (npx)
+# 또는 npx
 npx serve .
 ```
 
 브라우저에서 `http://localhost:8080` 으로 접속합니다.
 
-## 프로젝트 구조
+---
 
-```
-cafe-radar/
-├── index.html      # 메인 HTML (히어로, 후기 목록, 모달)
-├── style.css       # 디자인 시스템 & 반응형 스타일
-├── script.js       # 데이터 관리, 렌더링, 이벤트 처리
-├── favicon.svg     # 파비콘
-└── README.md       # 프로젝트 문서
-```
+## GitHub Pages 배포 방법
 
-### 코드 구조 (`script.js`)
+### 1. 저장소 설정
 
-| 영역 | 역할 |
-|------|------|
-| `Storage` | localStorage 읽기/쓰기 |
-| `State` | 검색어, 필터, 선택 별점 등 앱 상태 |
-| `Render` | 카드·통계·필터 UI 렌더링 |
-| `Modal` | 작성/상세 모달 열기·닫기 |
-| `Form` | 유효성 검사 및 후기 등록 |
+1. GitHub에 `caferadar` 저장소를 push합니다.
+2. **Settings → Pages**
+3. Source: **Deploy from a branch**
+4. Branch: `main` / `/ (root)`
+5. Save
 
-## 향후 계획
+### 2. Supabase URL 등록
 
-- [ ] **회원 로그인/회원가입** — 후기 작성자 인증 및 이력 관리
-- [ ] **댓글 기능** — 후기에 대한 추가 질문·답변
-- [ ] **신고 기능** — 허위·악성 후기 신고 및 검토
-- [ ] **관리자 페이지** — 후기 승인, 신고 처리, 통계 대시보드
-- [ ] **데이터베이스 연동** — Firebase, Supabase 등 백엔드 연동
-- [ ] **지도 연동** — 카페 위치 기반 검색 (카카오맵/네이버맵 API)
-- [ ] **평점 세분화** — 시급, 분위기, 교육 등 항목별 별점
-- [ ] **북마크/좋아요** — 관심 카페 저장
+배포 URL이 `https://YOUR_USERNAME.github.io/caferadar/` 라면,
+
+Supabase **Authentication → URL Configuration** 에 위 URL을 Site URL 및 Redirect URLs에 등록합니다.
+
+### 3. config.js 확인
+
+`js/config.js`에 올바른 `SUPABASE_URL`, `SUPABASE_ANON_KEY`가 설정되어 있는지 확인합니다.
+
+> `anon` key는 클라이언트에 노출되어도 됩니다. RLS로 데이터 접근이 보호됩니다.
+
+### 4. 배포 확인
+
+Pages 빌드 완료 후 접속하여 아래를 확인합니다.
+
+- [ ] 후기 · 구인글 목록 로드
+- [ ] 회원가입 / 로그인
+- [ ] 후기 작성 (로그인 필요)
+- [ ] 구인글 작성 (비회원 가능)
+- [ ] 새로고침 후 데이터 유지
+
+---
 
 ## 라이선스
 
