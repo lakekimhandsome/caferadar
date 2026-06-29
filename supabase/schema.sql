@@ -9,6 +9,7 @@ create extension if not exists pgcrypto;
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   nickname text not null,
+  is_admin boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -16,6 +17,37 @@ create index if not exists profiles_nickname_lower_idx on public.profiles (lower
 
 create unique index if not exists profiles_nickname_lower_unique
   on public.profiles (lower(trim(nickname)));
+
+-- 관리자 이메일 목록 (Supabase SQL Editor에서 insert/delete)
+create table if not exists public.admin_emails (
+  email text primary key,
+  created_at timestamptz not null default now()
+);
+
+alter table public.admin_emails enable row level security;
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (select p.is_admin from public.profiles p where p.id = auth.uid()),
+    false
+  )
+  or exists (
+    select 1
+    from auth.users u
+    inner join public.admin_emails ae
+      on lower(trim(u.email)) = lower(trim(ae.email))
+    where u.id = auth.uid()
+  );
+$$;
+
+revoke all on function public.is_admin() from public;
+grant execute on function public.is_admin() to anon, authenticated;
 
 alter table public.profiles enable row level security;
 
@@ -29,7 +61,7 @@ create policy "profiles_select_public"
 create policy "profiles_insert_own"
   on public.profiles for insert
   to authenticated
-  with check (auth.uid() = id);
+  with check (auth.uid() = id and is_admin = false);
 
 -- 본인 프로필만 수정
 create policy "profiles_update_own"
@@ -79,6 +111,11 @@ create policy "reviews_delete_own"
   on public.reviews for delete
   to authenticated
   using (auth.uid() = user_id);
+
+create policy "reviews_delete_admin"
+  on public.reviews for delete
+  to authenticated
+  using (public.is_admin());
 
 -- 본인 후기만 수정
 create policy "reviews_update_own"
@@ -135,9 +172,43 @@ create policy "jobs_delete_own"
   to authenticated
   using (auth.uid() = user_id);
 
+create policy "jobs_delete_admin"
+  on public.jobs for delete
+  to authenticated
+  using (public.is_admin());
+
 -- ─────────────────────────────────────────
 -- 4. 회원가입 시 프로필 자동 생성 트리거
 -- ─────────────────────────────────────────
+create or replace function public.protect_profile_is_admin()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' then
+    if new.is_admin is distinct from false then
+      new.is_admin := false;
+    end if;
+    return new;
+  end if;
+
+  if new.is_admin is distinct from old.is_admin then
+    if not public.is_admin() then
+      new.is_admin := old.is_admin;
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists protect_profile_is_admin on public.profiles;
+create trigger protect_profile_is_admin
+  before insert or update on public.profiles
+  for each row execute function public.protect_profile_is_admin();
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -479,3 +550,8 @@ create policy "job_seekers_update_own"
 create policy "job_seekers_delete_own"
   on public.job_seekers for delete
   using (auth.uid() = user_id);
+
+create policy "job_seekers_delete_admin"
+  on public.job_seekers for delete
+  to authenticated
+  using (public.is_admin());

@@ -107,7 +107,31 @@ RLS(Row Level Security) 정책:
 이미 DB가 있는 경우 [`supabase/migration_rls.sql`](supabase/migration_rls.sql) 을 SQL Editor에서 실행하세요.
 
 > 이미 DB를 생성한 경우 마이그레이션 SQL을 SQL Editor에서 실행하세요.  
-> v2 → v3_reapply → v3_fix_pgcrypto → **migration_withdraw_reapply.sql** (탈퇴) → **migration_nickname_unique.sql** (닉네임 중복 확인) → **migration_rls.sql** (RLS 정책)
+> v2 → v3_reapply → v3_fix_pgcrypto → **migration_withdraw_reapply.sql** (탈퇴) → **migration_nickname_unique.sql** (닉네임 중복 확인) → **migration_rls.sql** (RLS 정책) → **migration_admin.sql** (관리자 삭제 권한)
+
+### 5. 관리자 설정
+
+1. `supabase/migration_admin.sql`을 SQL Editor에서 실행합니다.
+2. 관리자로 지정할 **이메일을 등록**합니다. 여러 명을 한 번에 넣을 수 있습니다.
+
+```sql
+insert into public.admin_emails (email) values
+  ('admin1@example.com'),
+  ('admin2@example.com')
+on conflict (email) do nothing;
+```
+
+3. 해당 이메일로 **회원가입 후 로그인**하면 관리자 권한이 적용됩니다.
+
+관리자로 로그인하면 본인 글이 아닌 **후기·구인글·구직글** 상세 화면에서 **관리자 삭제** 버튼이 보입니다.
+
+| 작업 | SQL |
+|------|-----|
+| 관리자 추가 | `insert into public.admin_emails (email) values ('이메일');` |
+| 관리자 해제 | `delete from public.admin_emails where email = '이메일';` |
+| 목록 확인 | Supabase Table Editor → `admin_emails` |
+
+> 이미 `migration_admin.sql`만 실행한 경우, `migration_admin_emails.sql`을 추가로 실행하세요.
 
 회원가입 시 `profiles` 행은 DB 트리거(`handle_new_user`)로 자동 생성됩니다.
 

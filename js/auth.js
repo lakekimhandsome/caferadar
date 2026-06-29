@@ -6,6 +6,7 @@ import { getSupabase } from './supabase.js';
 export const authState = {
   user: null,
   profile: null,
+  isAdmin: false,
 };
 
 export async function initAuth(onChange) {
@@ -24,26 +25,38 @@ export async function initAuth(onChange) {
 async function setSessionUser(user) {
   authState.user = user;
   authState.profile = null;
+  authState.isAdmin = false;
 
   if (!user) return;
 
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, nickname')
+    .select('id, nickname, is_admin')
     .eq('id', user.id)
     .maybeSingle();
 
   if (error) {
     console.error('[Auth] 프로필 조회 실패:', error.message);
-    return;
+  } else {
+    authState.profile = data;
   }
 
-  authState.profile = data;
+  const { data: adminFlag, error: adminError } = await supabase.rpc('is_admin');
+  if (adminError) {
+    console.error('[Auth] 관리자 확인 실패:', adminError.message);
+    authState.isAdmin = !!data?.is_admin;
+  } else {
+    authState.isAdmin = !!adminFlag;
+  }
 }
 
 export function isLoggedIn() {
   return !!authState.user;
+}
+
+export function isAdmin() {
+  return authState.isAdmin;
 }
 
 export function getNickname() {
@@ -150,6 +163,7 @@ export async function signOut() {
 
   authState.user = null;
   authState.profile = null;
+  authState.isAdmin = false;
   return { success: true, message: '로그아웃되었습니다.' };
 }
 
@@ -191,6 +205,7 @@ export async function deleteAccount(password) {
 
   authState.user = null;
   authState.profile = null;
+  authState.isAdmin = false;
   await supabase.auth.signOut();
 
   return { success: true, message: '회원 탈퇴가 완료되었습니다.' };

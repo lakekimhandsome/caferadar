@@ -11,7 +11,7 @@ import {
   getJobStatusLabel,
   getJobStatusBadgeClass,
 } from './utils.js';
-import { isLoggedIn, getNickname, authState } from './auth.js';
+import { isLoggedIn, isAdmin, getNickname, authState } from './auth.js';
 
 /** 상세 모달 액션 핸들러 (app.js에서 등록) */
 let actionHandlers = {
@@ -56,6 +56,13 @@ function renderEditButton(type, id) {
 
 function renderOwnerActions(type, id) {
   return `<div class="detail-actions">${renderEditButton(type, id)}${renderDeleteButton(type, id)}</div>`;
+}
+
+function renderAdminDeleteActions(type, id) {
+  return `<div class="detail-footer detail-footer-admin">
+    <p class="detail-admin-hint">관리자 권한으로 이 글을 삭제할 수 있습니다.</p>
+    <div class="detail-actions">${renderDeleteButton(type, id, '관리자 삭제')}</div>
+  </div>`;
 }
 
 export const state = {
@@ -536,7 +543,9 @@ function openReviewDetail(id) {
 
   const ownerActions = isReviewOwner(review)
     ? `<div class="detail-footer">${renderOwnerActions('review', review.id)}</div>`
-    : '';
+    : isAdmin()
+      ? renderAdminDeleteActions('review', review.id)
+      : '';
 
   DOM.detailTitle.textContent = review.cafeName;
   DOM.detailRegion.textContent = review.region;
@@ -579,6 +588,8 @@ export function openJobDetail(id) {
           ${renderDeleteButton('job', job.id)}
         </div>
       </div>`;
+  } else if (isAdmin()) {
+    ownerSection = renderAdminDeleteActions('job', job.id);
   } else if (isGuestJob(job)) {
     ownerSection = `
       <div class="detail-footer">
@@ -611,7 +622,9 @@ export function openSeekerDetail(id) {
 
   const ownerActions = isSeekerOwner(seeker)
     ? `<div class="detail-footer">${renderOwnerActions('seeker', seeker.id)}</div>`
-    : '';
+    : isAdmin()
+      ? renderAdminDeleteActions('seeker', seeker.id)
+      : '';
 
   DOM.seekerDetailTitle.textContent = seeker.position;
   DOM.seekerDetailSubtitle.textContent = seeker.region;

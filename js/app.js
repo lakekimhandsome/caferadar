@@ -2,7 +2,7 @@
  * CafeRadar — 앱 진입점
  * Supabase Auth + Database 연동
  */
-import { initAuth, signUp, signIn, signOut, deleteAccount, checkNicknameAvailable, requireAuth, isLoggedIn, authState } from './auth.js';
+import { initAuth, signUp, signIn, signOut, deleteAccount, checkNicknameAvailable, requireAuth, isLoggedIn, isAdmin, authState } from './auth.js';
 import { fetchReviews, fetchReviewsByUser, createReview, deleteReview, updateReview } from './reviews.js';
 import {
   fetchJobs,
@@ -470,7 +470,15 @@ function handleGuestJobManage(id) {
 }
 
 async function handleDeleteReview(id) {
-  if (!confirmDelete('정말 삭제하시겠습니까?')) return;
+  const review = state.reviews.find((r) => r.id === id);
+  if (!review) return;
+  const isOwner = review.userId === authState.user?.id;
+  if (!isOwner && !isAdmin()) return;
+
+  const message = isAdmin() && !isOwner
+    ? '관리자 권한으로 이 후기를 삭제하시겠습니까?'
+    : '정말 삭제하시겠습니까?';
+  if (!confirmDelete(message)) return;
 
   try {
     await withLoading(() => deleteReview(id));
@@ -487,11 +495,20 @@ async function handleDeleteJob(id) {
   const job = state.jobs.find((j) => j.id === id);
   if (!job) return;
 
-  if (!confirmDelete('정말 삭제하시겠습니까?')) return;
+  const isOwner = job.userId === authState.user?.id;
+  const canAdminDelete = isAdmin() && !isOwner && !getGuestJobPassword(id);
+  if (!isOwner && !getGuestJobPassword(id) && !isAdmin()) return;
+
+  const message = canAdminDelete
+    ? '관리자 권한으로 이 구인글을 삭제하시겠습니까?'
+    : '정말 삭제하시겠습니까?';
+  if (!confirmDelete(message)) return;
 
   try {
     await withLoading(async () => {
       if (job.userId) {
+        await deleteJob(id);
+      } else if (isAdmin()) {
         await deleteJob(id);
       } else {
         const password = getGuestJobPassword(id);
@@ -515,9 +532,14 @@ async function handleDeleteJob(id) {
 
 async function handleDeleteSeeker(id) {
   const seeker = state.jobSeekers.find((s) => s.id === id);
-  if (!seeker || seeker.userId !== authState.user?.id) return;
+  if (!seeker) return;
+  const isOwner = seeker.userId === authState.user?.id;
+  if (!isOwner && !isAdmin()) return;
 
-  if (!confirmDelete('정말 삭제하시겠습니까?')) return;
+  const message = isAdmin() && !isOwner
+    ? '관리자 권한으로 이 구직글을 삭제하시겠습니까?'
+    : '정말 삭제하시겠습니까?';
+  if (!confirmDelete(message)) return;
 
   try {
     await withLoading(() => deleteJobSeeker(id));
